@@ -28,7 +28,11 @@ test("visitor cannot read or mutate prompt data; icons remain public", async ({
   ]) {
     const response = await context.request.get(path);
     expect(response.status()).toBe(200);
-    expect(response.headers()["content-type"]).toContain(mime);
+    const types =
+      path === "/favicon.ico" ? [mime, "image/vnd.microsoft.icon"] : [mime];
+    expect(types).toContain(
+      response.headers()["content-type"].split(";")[0].trim(),
+    );
   }
   await page.getByLabel("Appearance").selectOption("system");
   await page.emulateMedia({ colorScheme: "light" });

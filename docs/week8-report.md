@@ -19,8 +19,10 @@ Extended the existing separate `punnett-splicer` repository and Vercel project f
 - All nine provider, validation, strand, and PostgreSQL fixture tests passed. They cover superadmin/Google checks, chain/step CRUD, atomic reorder, stale writes, run snapshots, output persistence, and pagination across 1,203 rows.
 - The production build passed. Its Google Fonts download required network access in the local environment.
 - Three browser tests passed against the production-built app in fresh browser contexts. They cover visitor route/action/asset denial, exact-origin OAuth initiation, persistent themes, live OS appearance changes, no horizontal overflow, and WCAG A/AA scans at 320, 390, 768, and 1440 pixels.
+- The same three scenarios passed against the deployed origin. The visitor/icon case was rerun after accepting Vercel's valid `image/vnd.microsoft.icon` MIME type alongside the local server's `image/x-icon` type. Application code did not change for that correction.
 - Anonymous requests to all six live studio RPCs were denied. The private schema is not exposed through PostgREST.
-- Selection and Observatory's current commit URLs returned public HTTP 200 without cookies or a protection bypass. Splicer's previous deployment returned a Vercel SSO redirect.
+- Selection and Observatory's current commit URLs returned public HTTP 200 without cookies or a protection bypass. After the owner configured Splicer, its new deployment also returned public HTTP 200 and showed Google sign-in. Production/Preview environment-variable presence and disabled Vercel protection were confirmed without reading secret values.
+- GitHub Actions passed for implementation commit `32f321748db430f45e5285ec716d9a519e311596`.
 - The installed dependency tree is valid. npm reports zero production advisories. Eight moderate development advisories trace to lint tooling's minimatch dependency. The suggested automated fix downgrades `eslint-config-next` to a different framework major, so no force downgrade was applied.
 
 Three additional browser tests passed in the isolated actual-component editor. They cover chain/step CRUD, keyboard and drag reorder with persistence after reload, prompt inspection, chain-filter search, sequential test-set failure handling, keyboard navigation, and responsive accessibility. Isolated browser fixtures do not establish successful production Google login or generation.
@@ -33,11 +35,11 @@ The Supabase management connector repeatedly timed out during current authentica
 
 ## HUMAN tasks needed
 
-1. Add the Supabase URL/anon key and server-only Gemini key to Production and Preview in the [Splicer Vercel settings](https://vercel.com/sophie-zhangs-projects/punnett-splicer/settings). No environment values were transferred from other projects.
-2. Disable deployment protection for Splicer. Keep protection off for all three apps. AGENTS.md R4 assigns this setting to the owner.
-3. Register the stable and final commit URL's exact `/auth/callback` in Supabase.
-4. Redeploy after configuration. Verify real superadmin login, ordinary-user denial, and a real saved generation on that final origin.
+The owner completed Production/Preview environment configuration and disabled Splicer protection. No environment values were transferred by the agent. Keep protection off for all three apps, as AGENTS.md R4 requires.
+
+1. Register the final commit URL's exact `/auth/callback` in Supabase. Keep the stable callback too.
+2. Verify real superadmin login, ordinary-user denial, and a real saved generation on that final origin.
 
 ## Open questions
 
-Production OAuth and actual provider generation depend on owner configuration and remain acceptance gates. The prompt tool is not submission-ready while Vercel SSO is enabled or its environment variables are missing. The assignment submission portal was not modified.
+Production OAuth and actual provider generation remain acceptance gates. The browser's real Google sign-in request included the correct commit-specific callback, but Supabase returned it to Selection, which is consistent with that callback not being allowlisted. Subsequent browser-control calls timed out. No successful live authenticated generation is claimed. The assignment submission portal was not modified.
