@@ -1,5 +1,6 @@
 "use client";
 
+import { Icon } from "@/components/ui/Icon";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -15,10 +16,10 @@ import {
 } from "@xyflow/react";
 import { editStudio } from "@/app/studio-actions";
 import type { Chain, Option, Step } from "@/lib/studio";
-import { GENE_SPACING, strandPosition } from "@/lib/strand";
+import { STEP_SPACING, stepPosition } from "@/lib/chain-canvas";
 import { StudioForm, StepFields } from "../StudioForms";
 
-type Gene = Node<
+type CanvasStep = Node<
   {
     label: string;
     detail: string;
@@ -28,20 +29,20 @@ type Gene = Node<
     move: (step: Step, position: number) => void;
     inspect: (id: string) => void;
   },
-  "gene"
+  "step"
 >;
 
-/** A gene exposes the same persisted order through pointer and keyboard controls. */
-function GeneNode({ data, selected }: NodeProps<Gene>) {
+/** A step exposes the same persisted order through pointer and keyboard controls. */
+function StepNode({ data, selected }: NodeProps<CanvasStep>) {
   const step = data.step;
   return (
-    <div className={`gene-node${selected ? " selected" : ""}`}>
+    <div className={`step-node${selected ? " selected" : ""}`}>
       <Handle type="target" position={Position.Left} isConnectable={false} />
       <span className="eyebrow">
-        {step ? `Gene ${String(step.position).padStart(2, "0")}` : "Sequence"}
+        {step ? `Step ${String(step.position).padStart(2, "0")}` : "Sequence"}
       </span>
       <button
-        className="gene-label nodrag"
+        className="step-label nodrag"
         onClick={() => step && data.inspect(step.id)}
         disabled={!step}
       >
@@ -49,14 +50,14 @@ function GeneNode({ data, selected }: NodeProps<Gene>) {
       </button>
       <p>{data.detail}</p>
       {step && (
-        <div className="gene-moves nodrag">
+        <div className="step-moves nodrag">
           <button
             type="button"
             aria-label={`Move ${step.name} left`}
             disabled={data.busy || step.position === 1}
             onClick={() => data.move(step, step.position - 1)}
           >
-            ←
+            <Icon name="left" />
           </button>
           <span>
             {step.input_kind === "image" ? "Image" : "Text"} →{" "}
@@ -68,7 +69,7 @@ function GeneNode({ data, selected }: NodeProps<Gene>) {
             disabled={data.busy || step.position === data.count}
             onClick={() => data.move(step, step.position + 1)}
           >
-            →
+            <Icon name="right" />
           </button>
         </div>
       )}
@@ -76,10 +77,10 @@ function GeneNode({ data, selected }: NodeProps<Gene>) {
     </div>
   );
 }
-const nodeTypes = { gene: GeneNode };
+const nodeTypes = { step: StepNode };
 
-/** The strand is derived from saved order; no drawn connection can change a chain. */
-export function GeneStrand({
+/** The flow is derived from saved order; no drawn connection can change a chain. */
+export function ChainCanvas({
   chain,
   models,
 }: {
@@ -92,22 +93,22 @@ export function GeneStrand({
   const [inspected, setInspected] = useState<string | null>(null);
   const step = chain.steps.find((s) => s.id === inspected);
 
-  function move(gene: Step, position: number) {
+  function move(step: Step, position: number) {
     if (busy) return;
     setNodes(initialNodes);
-    if (position === gene.position) return;
+    if (position === step.position) return;
     const form = new FormData();
     form.set("chain_id", chain.id);
     form.set("revision", String(chain.revision));
-    form.set("step_id", gene.id);
+    form.set("step_id", step.id);
     form.set("position", String(position));
-    setMessage("Saving gene order…");
+    setMessage("Saving step order…");
     start(async () => {
       try {
         const result = await editStudio("step.move", form);
         setMessage(
           result.ok
-            ? `${gene.name} moved to position ${position}.`
+            ? `${step.name} moved to position ${position}.`
             : result.message,
         );
         router.refresh();
@@ -123,33 +124,34 @@ export function GeneStrand({
     move,
     inspect: setInspected,
   };
-  const initialNodes: Gene[] = [
+  const initialNodes: CanvasStep[] = [
     {
       id: "input",
-      type: "gene",
+      type: "step",
       position: { x: 0, y: 0 },
       draggable: false,
       data: { ...common, label: "Test images", detail: "Source material" },
     },
     ...chain.steps.map((s) => ({
       id: s.id,
-      type: "gene" as const,
-      position: { x: s.position * GENE_SPACING, y: 0 },
+      type: "step" as const,
+      position: { x: s.position * STEP_SPACING, y: 0 },
       data: { ...common, label: s.name, detail: s.model, step: s },
     })),
     {
       id: "output",
-      type: "gene",
-      position: { x: (chain.steps.length + 1) * GENE_SPACING, y: 0 },
+      type: "step",
+      position: { x: (chain.steps.length + 1) * STEP_SPACING, y: 0 },
       draggable: false,
       data: {
         ...common,
-        label: "Specimens",
+        label: "Captions",
         detail: "Saved captions & traces",
       },
     },
   ];
-  const [nodes, setNodes, onNodesChange] = useNodesState<Gene>(initialNodes);
+  const [nodes, setNodes, onNodesChange] =
+    useNodesState<CanvasStep>(initialNodes);
   const displayedNodes = nodes.map((n) => ({
     ...n,
     data: { ...n.data, ...common },
@@ -162,16 +164,15 @@ export function GeneStrand({
   }));
 
   return (
-    <section className="strand-panel" aria-label="Genome strand">
+    <section className="chain-panel" aria-label="Prompt chain canvas">
       <header>
         <div>
-          <p className="eyebrow">Genome map</p>
-          <h2>Follow the strand</h2>
+          <h2>Prompt chain</h2>
         </div>
-        <p className="fine">Drag a gene to re-sequence the chain.</p>
+        <p className="fine">Drag steps to change their order.</p>
       </header>
-      <div className="gene-canvas">
-        <ReactFlow<Gene>
+      <div className="step-canvas">
+        <ReactFlow<CanvasStep>
           nodes={displayedNodes}
           edges={edges}
           nodeTypes={nodeTypes}
@@ -187,34 +188,34 @@ export function GeneStrand({
             node.data.step &&
             move(
               node.data.step,
-              strandPosition(node.position.x, chain.steps.length),
+              stepPosition(node.position.x, chain.steps.length),
             )
           }
           fitView
           fitViewOptions={{ padding: 0.2, minZoom: 0.35, maxZoom: 0.85 }}
           minZoom={0.2}
           maxZoom={1.5}
-          aria-label="Ordered prompt chain. Select a gene to inspect it."
+          aria-label="Ordered prompt chain. Select a step to inspect it."
         >
           <Background gap={24} color="var(--border)" />
           <Controls showInteractive={false} />
           <MiniMap
             style={{ width: 150, height: 90 }}
-            nodeColor="var(--glow)"
+            nodeColor="var(--accent)"
             maskColor="transparent"
             pannable
             zoomable
           />
         </ReactFlow>
       </div>
-      <p className="fine strand-status" role="status">
+      <p className="fine chain-status" role="status">
         {busy
-          ? "Saving gene order…"
+          ? "Saving step order…"
           : message ||
-            "Pan or zoom to explore. Use the arrow buttons to move a gene by keyboard."}
+            "Pan or zoom to explore. Use the arrow buttons to move a step by keyboard."}
       </p>
       {step && (
-        <aside className="gene-inspector" aria-label="Gene inspector">
+        <aside className="step-inspector" aria-label="Step details">
           <div className="row-actions">
             <h3>
               {step.position}. {step.name}
@@ -241,7 +242,7 @@ export function GeneStrand({
             chain={chain}
             step={step}
             base="/chains"
-            label="Edit selected gene"
+            label="Edit selected step"
           >
             <StepFields
               step={step}

@@ -1,4 +1,5 @@
 "use client";
+import { Icon } from "@/components/ui/Icon";
 import * as Dialog from "@radix-ui/react-dialog";
 import { useRef, useState, useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
@@ -328,7 +329,8 @@ export function MoveStep({ chain, step }: { chain: Chain; step: Step }) {
         disabled={pending || step.position === 1}
         onClick={() => move(step.position - 1)}
       >
-        ↑ Move up
+        <Icon name="up" />
+        Move up
       </button>
       <button
         type="button"
@@ -337,7 +339,8 @@ export function MoveStep({ chain, step }: { chain: Chain; step: Step }) {
         disabled={pending || step.position === chain.steps.length}
         onClick={() => move(step.position + 1)}
       >
-        ↓ Move down
+        <Icon name="down" />
+        Move down
       </button>
       {error && (
         <p role="alert" className="error">

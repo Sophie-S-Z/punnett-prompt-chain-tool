@@ -32,3 +32,8 @@ No schema or RPC change is required for the visual strand, multi-image test set,
 The deployed REST endpoints denied anonymous execution for all six studio RPCs on November 5. PostgREST also denied access to the private schema. Current authenticated schema inspection through the Supabase connector timed out on repeated attempts. Consequently this update does not claim fresh live authenticated CRUD or provider acceptance. The installed contract above and isolated database tests remain the implementation evidence.
 
 Rechecked primary library contracts: [React Flow component API](https://reactflow.dev/api-reference/react-flow) and [next-themes](https://github.com/pacocoursey/next-themes). Rechecked the [Gemini GenerateContent REST reference](https://ai.google.dev/api/generate-content?hl=en): the existing `responseFormat.text.mimeType = APPLICATION_JSON` contract remains documented. No course API endpoint was invented.
+
+
+## 2026-11-05 interface and historical content review
+
+Verified the actual `punnett_private.studio_*`, `w7_*`, and public caption/image/generation columns before reviewing saved content. Owner explicitly approved retiring historical wording. Migration `retire_legacy_ui_content` keeps 153 original records in `punnett_private.ui_content_archive(source,record_id,row_data,saved_at)`. Client roles have no archive grants. Replaced content is labeled as retired, never presented as newly generated. Retired catalog generations are archived; 28 real captions remain public. Current prompt chains, run snapshots, and step outputs contain no retired vocabulary. No row-security policy, auth rule, or service-role configuration changed. The migration SQL and recovery guidance are maintained in the Splicer repository.

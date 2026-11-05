@@ -2,14 +2,26 @@ import { redirect } from "next/navigation";
 import { adminAccess } from "@/lib/admin";
 import { AuthControls } from "@/components/AuthControls";
 import { ThemeControl } from "@/components/ThemeControl";
-import { ClearanceRequired } from "@/components/lab/ClearanceRequired";
+import { ClearanceRequired } from "@/components/product/ClearanceRequired";
 export default async function Home({
   searchParams,
 }: {
   searchParams: Promise<{ auth?: string }>;
 }) {
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
-    return <main id="main" className="access-screen"><p className="eyebrow">Punnett / Prompt studio</p><h1>Connecting the workspace.</h1><p>The prompt studio will be available after its owner finishes the connection settings.</p></main>;
+  if (
+    !process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  )
+    return (
+      <main id="main" className="access-screen">
+        <p className="eyebrow">Punnett / Prompt studio</p>
+        <h1>Connecting the workspace.</h1>
+        <p>
+          The prompt studio will be available after its owner finishes the
+          connection settings.
+        </p>
+      </main>
+    );
   const access = await adminAccess();
   if (access.state === "admin") redirect("/chains");
   if (access.state !== "visitor")
@@ -21,13 +33,9 @@ export default async function Home({
         <ThemeControl />
       </div>
       <p className="eyebrow">Punnett / Prompt studio</p>
-      <h1>
-        One good prompt.
-        <br />
-        Then the next.
-      </h1>
+      <h1>Build better prompt chains.</h1>
       <p>
-        Build a chain from image to idea to caption. Edit the instructions,
+        Turn an image into captions, one step at a time. Edit the instructions,
         change the order, and inspect what each step produced.
       </p>
       <ol className="welcome-sequence">

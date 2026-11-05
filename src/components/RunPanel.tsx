@@ -170,7 +170,7 @@ export function RunPanel({
         <p>
           No available images.{" "}
           <a
-            href="https://punnett-selection.vercel.app/incubator"
+            href="https://punnett-selection.vercel.app/create"
             target="_blank"
             rel="noreferrer"
           >

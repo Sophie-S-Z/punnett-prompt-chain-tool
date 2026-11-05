@@ -1,7 +1,7 @@
 // Isolated production-built UI fixture. No real user, model call, or database mutation.
 // Actual page/forms are copied; only auth/data transport and actions use fixture files.
 import assert from "node:assert/strict";
-import { mkdir, writeFile, readFile } from "node:fs/promises";
+import { mkdir, writeFile, readFile, rm } from "node:fs/promises";
 import { resolve } from "node:path";
 import { spawn, spawnSync } from "node:child_process";
 const root = process.cwd(),
@@ -11,6 +11,8 @@ async function write(name, text) {
   await mkdir(resolve(folder, name, ".."), { recursive: true });
   await writeFile(resolve(folder, name), text);
 }
+// Remove only the retired generated spec, inside the fixed local fixture directory.
+await rm(resolve(folder, "specs/strand.spec.ts"), { force: true });
 const chainId = "00110000-0000-4000-8000-000000000001",
   modelId = "00110000-0000-4000-8000-000000000002";
 const step = {
@@ -64,7 +66,7 @@ for (const name of [
   "StudioPage",
   "StudioForms",
   "RunPanel",
-  "lab/GeneStrand",
+  "product/ChainCanvas",
 ]) {
   let source = await readFile(
     resolve(root, `src/components/${name}.tsx`),
@@ -74,7 +76,7 @@ for (const name of [
     .replace('"@/lib/admin"', '"./fixture-admin"')
     .replace(
       '"@/app/studio-actions"',
-      name.startsWith("lab/") ? '"../stub-actions"' : '"./stub-actions"',
+      name.startsWith("product/") ? '"../stub-actions"' : '"./stub-actions"',
     );
   for (const component of ["Shell", "RecordImage"])
     source = source.replace(`"./${component}"`, `"@/components/${component}"`);
@@ -100,7 +102,7 @@ export async function runStudio(form:FormData):Promise<any>{const calls=JSON.par
 );
 await write(
   "app/layout.tsx",
-  `import '../../../src/app/globals.css';import {ThemeProvider} from '@/components/ThemeProvider';export const metadata={title:'Prompt studio isolated UI fixture'};export default function Layout({children}:{children:React.ReactNode}){return <html lang="en" data-theme="night" suppressHydrationWarning><body><ThemeProvider>{children}</ThemeProvider></body></html>}`,
+  `export {default,metadata} from '../../../src/app/layout';`,
 );
 for (const route of ["chains", "mix", "runs"])
   await write(
@@ -125,14 +127,14 @@ for(const width of [320,768,1440]){await page.setViewportSize({width,height:1000
 });`,
 );
 await write(
-  "specs/strand.spec.ts",
+  "specs/flow.spec.ts",
   `import {test,expect} from '@playwright/test';
-test('gene strand: inspect, keyboard reorder, drag reorder, persisted order and chain results',async({page})=>{
+test('step flow: inspect, keyboard reorder, drag reorder, persisted order and chain results',async({page})=>{
 await page.goto('/chains');
-const map=page.getByRole('region',{name:'Genome strand',exact:true});
+const map=page.getByRole('region',{name:'Prompt chain canvas',exact:true});
 await expect(map.getByRole('button',{name:'Describe',exact:true})).toBeVisible();
 await map.getByRole('button',{name:'Describe',exact:true}).click();
-await expect(page.getByRole('complementary',{name:'Gene inspector'})).toContainText('Fixture system prompt');
+await expect(page.getByRole('complementary',{name:'Step details'})).toContainText('Fixture system prompt');
 await page.getByRole('button',{name:'Close inspector',exact:true}).click();
 const right=map.getByRole('button',{name:'Move Describe right',exact:true});
 await right.focus();await page.keyboard.press('Enter');
@@ -142,7 +144,7 @@ const drag=map.locator('.react-flow__node').filter({has:page.getByRole('button',
 const first=map.locator('.react-flow__node').filter({has:page.getByRole('button',{name:'Caption draft',exact:true})});
 const from=await drag.boundingBox(),to=await first.boundingBox();
 expect(from).not.toBeNull();expect(to).not.toBeNull();
-if(!from||!to)throw new Error('Gene nodes were not measured');
+if(!from||!to)throw new Error('Step nodes were not measured');
 await page.mouse.move(from.x+from.width/2,from.y+10);await page.mouse.down();await page.mouse.move(to.x+to.width/2,to.y+10,{steps:15});await page.mouse.up();
 await expect(page.locator('.step-card h3')).toHaveText(['Describe','Caption draft']);
 await page.reload();await expect(page.locator('.step-card h3')).toHaveText(['Describe','Caption draft']);
@@ -167,7 +169,7 @@ await expect(page.getByRole('button',{name:'Run on 3 test images',exact:true})).
 const calls=JSON.parse(await readFile(${callsPath},'utf8')) as {image_id:string;request_id:string;chain_id:string;use_mix:string}[];
 expect(calls.map(c=>c.image_id)).toEqual(['00110000-0000-4000-8000-000000000001','00110000-0000-4000-8000-000000000002']);
 expect(calls[0].request_id).not.toBe(calls[1].request_id);expect(calls.every(c=>c.chain_id==='${chainId}'&&c.use_mix==='false')).toBe(true);
-await page.setViewportSize({width:1440,height:1100});await page.screenshot({path:${JSON.stringify(resolve(root, ".vercel/strand-desktop.png"))},fullPage:true});
+await page.setViewportSize({width:1440,height:1100});await page.screenshot({path:${JSON.stringify(resolve(root, ".vercel/chain-desktop.png"))},fullPage:true});
 });`,
 );
 delete env.GEMINI_API_KEY;

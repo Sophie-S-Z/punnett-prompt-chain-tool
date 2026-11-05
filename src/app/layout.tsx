@@ -1,19 +1,18 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Sans, JetBrains_Mono } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import "@/styles/product.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
-const sans = IBM_Plex_Sans({
-  variable: "--font-plex",
+const sans = Geist({
+  variable: "--font-ui",
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
   display: "swap",
 });
-const mono = JetBrains_Mono({
-  variable: "--font-mono",
+const mono = Geist_Mono({
+  variable: "--font-code",
   subsets: ["latin"],
-  weight: ["400", "500"],
   display: "swap",
 });
 export const metadata: Metadata = {

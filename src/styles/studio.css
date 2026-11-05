@@ -18,8 +18,8 @@
   font-weight: 500;
 }
 .studio-tabs a[aria-current="page"] {
-  color: var(--glow);
-  border-bottom-color: var(--glow);
+  color: var(--accent);
+  border-bottom-color: var(--accent);
 }
 .chain-list {
   display: grid;
@@ -43,11 +43,11 @@
   color: var(--text-muted);
 }
 .chain-card.selected {
-  border-color: var(--glow);
-  box-shadow: inset 3px 0 var(--glow);
+  border-color: var(--accent);
+  box-shadow: inset 3px 0 var(--accent);
 }
 .chain-card:hover {
-  border-color: var(--glow);
+  border-color: var(--accent);
 }
 .editor-layout {
   display: grid;
@@ -59,14 +59,14 @@
 .chain-editor {
   min-width: 0;
 }
-.strand-panel {
+.chain-panel {
   margin-bottom: 28px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   overflow: hidden;
   background: var(--surface);
 }
-.strand-panel > header {
+.chain-panel > header {
   padding: 20px;
   display: flex;
   align-items: center;
@@ -74,21 +74,21 @@
   flex-wrap: wrap;
   gap: 12px;
 }
-.strand-panel h2 {
+.chain-panel h2 {
   font-size: 1.3rem;
   margin: 0;
 }
-.strand-panel .eyebrow {
+.chain-panel .eyebrow {
   margin-bottom: 6px;
 }
-.gene-canvas {
+.step-canvas {
   height: 340px;
   background: var(--bg);
 }
-.gene-canvas .react-flow {
+.step-canvas .react-flow {
   --xy-node-background-color-default: var(--surface);
   --xy-node-color-default: var(--text);
-  --xy-edge-stroke-default: var(--glow);
+  --xy-edge-stroke-default: var(--accent);
   --xy-edge-stroke-width-default: 2;
   --xy-controls-button-background-color-default: var(--surface);
   --xy-controls-button-background-color-hover-default: var(--surface-active);
@@ -97,7 +97,7 @@
   --xy-minimap-background-color-default: var(--surface-active);
   --xy-attribution-background-color-default: var(--surface);
 }
-.gene-node {
+.step-node {
   width: 236px;
   padding: 18px;
   border: 1px solid var(--border);
@@ -105,11 +105,11 @@
   background: var(--surface);
   color: var(--text);
 }
-.gene-node.selected {
-  border-color: var(--glow);
-  box-shadow: inset 0 3px var(--glow);
+.step-node.selected {
+  border-color: var(--accent);
+  box-shadow: inset 0 3px var(--accent);
 }
-.gene-label {
+.step-label {
   display: block;
   border: 0;
   padding: 4px 0;
@@ -118,55 +118,55 @@
   font-weight: 500;
   text-align: left;
 }
-.gene-label:disabled {
+.step-label:disabled {
   opacity: 1;
   cursor: default;
 }
-.gene-node p {
+.step-node p {
   font-size: 11px;
   color: var(--text-muted);
   overflow-wrap: anywhere;
   margin: 6px 0 12px;
 }
-.gene-moves {
+.step-moves {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
   font-size: 10px;
 }
-.gene-moves button {
+.step-moves button {
   width: 36px;
   height: 36px;
   border: 1px solid var(--border);
   border-radius: 6px;
   background: var(--bg);
-  color: var(--glow);
+  color: var(--accent);
 }
-.gene-canvas .react-flow__handle {
-  background: var(--glow);
+.step-canvas .react-flow__handle {
+  background: var(--accent);
   border-color: var(--bg);
 }
-.gene-canvas .react-flow__controls-button {
+.step-canvas .react-flow__controls-button {
   width: 32px;
   height: 32px;
 }
-.gene-canvas .react-flow__attribution a {
+.step-canvas .react-flow__attribution a {
   color: var(--text-muted);
 }
-.strand-status {
+.chain-status {
   padding: 16px 20px;
   margin: 0;
 }
-.gene-inspector {
+.step-inspector {
   padding: 20px;
   border-top: 1px solid var(--border);
 }
-.gene-inspector dd {
+.step-inspector dd {
   margin-left: 0;
 }
 @media (max-width: 650px) {
-  .gene-canvas .react-flow__minimap {
+  .step-canvas .react-flow__minimap {
     display: none;
   }
 }
@@ -205,7 +205,7 @@
   bottom: -24px;
   left: 40px;
   height: 24px;
-  color: var(--glow);
+  color: var(--accent);
 }
 .step-heading {
   display: flex;
@@ -222,9 +222,9 @@
   margin: 0 0 8px;
 }
 .step-number {
-  color: var(--glow);
+  color: var(--accent);
   font:
-    500 1.5rem var(--font-mono),
+    500 1.5rem var(--font-code),
     monospace;
 }
 .prompt-text {
@@ -232,7 +232,7 @@
 }
 .prompt-text dt {
   font:
-    500 0.72rem var(--font-mono),
+    500 0.72rem var(--font-code),
     monospace;
   color: var(--text-muted);
   margin-bottom: 8px;
@@ -288,7 +288,7 @@
 .checkbox input {
   width: 18px !important;
   height: 18px;
-  accent-color: var(--glow);
+  accent-color: var(--accent);
 }
 .test-set-picker summary {
   cursor: pointer;
@@ -305,7 +305,7 @@
   overflow-wrap: anywhere;
 }
 .success {
-  color: var(--glow);
+  color: var(--accent);
 }
 .field-pair {
   display: grid;
@@ -388,11 +388,11 @@
   background: var(--surface-active);
   border-radius: 6px;
 }
-.specimen-code {
+.caption-code {
   display: block;
   color: var(--text-muted);
   font:
-    500 0.72rem var(--font-mono),
+    500 0.72rem var(--font-code),
     monospace;
   margin-bottom: 8px;
 }
@@ -415,7 +415,7 @@
 .studio-brand > span,
 .welcome-top > .studio-brand {
   font-size: 48px;
-  color: var(--glow);
+  color: var(--accent);
   letter-spacing: -0.1em;
   line-height: 1;
 }
@@ -476,8 +476,8 @@
   border-bottom: 1px solid var(--border);
 }
 .welcome-sequence span {
-  color: var(--glow);
-  font-family: var(--font-mono), monospace;
+  color: var(--accent);
+  font-family: var(--font-code), monospace;
   margin-right: 18px;
 }
 @media (max-width: 1150px) {

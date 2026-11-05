@@ -1,57 +1,57 @@
 :root,
 [data-theme="night"] {
-  /* Aubergine ink, apricot punchlines, periwinkle annotations. */
-  --bg: #181522;
-  --surface: #242032;
-  --surface-active: #332c43;
-  --border: #625773;
-  --glow: #ffbe98;
-  --glow-soft: #d9cfe5;
-  --glow-deep: #945d44;
-  --text: #f4edf9;
-  --text-muted: #b9abc9;
-  --ink: #e7cb87;
-  --mutant: #b4c5ff;
-  --mutant-deep: #59668e;
-  --danger: #ffa9be;
-  --radius: 10px;
-  --shadow: 0 24px 80px #10091f66;
+  color-scheme: dark;
+  --bg: #141519;
+  --surface: #1b1d22;
+  --surface-active: #24272e;
+  --border: #343842;
+  --text: #f6f7f9;
+  --text-muted: #a1a7b3;
+  --accent: #b2c5ff;
+  --accent-soft: #e0e7ff;
+  --accent-strong: #7c98ee;
+  --annotation: #c2c8d4;
+  --secondary: #aab4c7;
+  --secondary-strong: #62718c;
+  --danger: #ffb4bc;
+  --paper: #f6f7f9;
+  --paper-ink: #171a21;
+  --paper-muted: #5d6675;
+  --paper-line: #d6dae2;
+  --radius: 12px;
+  --radius-panel: 16px;
+  --radius-control: 8px;
+  --glass-edge: var(--border);
+  --shadow: 0 16px 48px #06070a40;
+  --surface-shadow: 0 16px 48px #06070a40;
+  --primary: #f6f7f9;
+  --primary-text: #171a21;
+  --focus: var(--accent);
+  --selected: #263047;
 }
-
 [data-theme="lights-on"] {
   color-scheme: light;
-  --bg: #f4f1f9;
+  --bg: #f7f8fa;
   --surface: #fff;
-  --surface-active: #e9e2f3;
-  --border: #8b7d9e;
-  --glow: #814222;
-  --glow-soft: #4f415f;
-  --glow-deep: #6c361c;
-  --text: #2b203a;
-  --text-muted: #655575;
-  --ink: #6b4e13;
-  --mutant: #46568e;
-  --mutant-deep: #354473;
+  --surface-active: #eef1f5;
+  --border: #d6dae2;
+  --text: #171a21;
+  --text-muted: #5d6675;
+  --accent: #2b51bf;
+  --accent-soft: #253c7d;
+  --accent-strong: #1c3a96;
+  --annotation: #545e72;
+  --secondary: #60708a;
+  --secondary-strong: #43516b;
   --danger: #a3264c;
-}
-@media (prefers-color-scheme: light) {
-  [data-theme="system"] {
-    color-scheme: light;
-    --bg: #f4f1f9;
-    --surface: #fff;
-    --surface-active: #e9e2f3;
-    --border: #8b7d9e;
-    --glow: #814222;
-    --glow-soft: #4f415f;
-    --glow-deep: #6c361c;
-    --text: #2b203a;
-    --text-muted: #655575;
-    --ink: #6b4e13;
-    --mutant: #46568e;
-    --mutant-deep: #354473;
-    --danger: #a3264c;
-  }
-}
-[data-theme="night"] {
-  color-scheme: dark;
+  --paper: #fff;
+  --paper-ink: #171a21;
+  --paper-muted: #5d6675;
+  --paper-line: #d6dae2;
+  --primary: #20242c;
+  --primary-text: #fff;
+  --focus: #2b51bf;
+  --selected: #e8eefd;
+  --shadow: 0 16px 48px #1b243214;
+  --surface-shadow: 0 16px 48px #1b243214;
 }

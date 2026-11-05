@@ -6,9 +6,9 @@
   --color-background: var(--bg);
   --color-surface: var(--surface);
   --color-foreground: var(--text);
-  --color-primary: var(--glow);
+  --color-primary: var(--accent);
   --color-border: var(--border);
-  --font-sans: var(--font-plex);
+  --font-sans: var(--font-ui);
 }
 * {
   box-sizing: border-box;
@@ -21,7 +21,7 @@ body {
   background: var(--bg);
   color: var(--text);
   font:
-    15px/1.55 var(--font-plex),
+    15px/1.55 var(--font-ui),
     sans-serif;
 }
 a {
@@ -55,7 +55,7 @@ select:focus-visible,
 textarea:focus-visible,
 summary:focus-visible,
 [tabindex]:focus-visible {
-  outline: 2px solid var(--ink);
+  outline: 2px solid var(--annotation);
 }
 p {
   margin: 0 0 1rem;
@@ -85,13 +85,13 @@ kbd,
 .badge,
 th,
 .pagination {
-  font-family: var(--font-mono), monospace;
+  font-family: var(--font-code), monospace;
 }
 .eyebrow {
   font-size: 0.65rem;
   text-transform: uppercase;
   letter-spacing: 0.14em;
-  color: var(--glow);
+  color: var(--accent);
   margin-bottom: 1rem;
 }
 .fine,
@@ -153,10 +153,10 @@ small {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  border: 1px solid var(--glow);
+  border: 1px solid var(--accent);
   border-radius: 6px;
   padding: 10px 17px;
-  background: var(--glow);
+  background: var(--accent);
   color: var(--bg);
   font-weight: 500;
   white-space: nowrap;
@@ -170,7 +170,7 @@ small {
 .text-button {
   border: 0;
   background: transparent;
-  color: var(--glow);
+  color: var(--accent);
   padding: 8px 0;
   display: inline-block;
   min-height: 36px;
@@ -186,7 +186,7 @@ small {
   top: -100px;
   left: 12px;
   z-index: 100;
-  background: var(--ink);
+  background: var(--annotation);
   color: var(--bg);
   padding: 12px;
 }
@@ -224,7 +224,7 @@ small {
   font-size: 5rem;
   letter-spacing: -0.1em;
   line-height: 1;
-  color: var(--glow);
+  color: var(--accent);
   margin-bottom: 40px;
 }
 .app-shell {
@@ -252,7 +252,7 @@ small {
 }
 .wordmark > span {
   font-size: 48px;
-  color: var(--glow);
+  color: var(--accent);
   letter-spacing: -0.1em;
   line-height: 1;
 }
@@ -282,7 +282,7 @@ small {
 }
 .sidebar nav a:hover,
 .sidebar nav a[aria-current] {
-  color: var(--glow);
+  color: var(--accent);
   background: var(--surface-active);
 }
 .create-link {
@@ -315,7 +315,7 @@ small {
   height: 6px;
   width: 6px;
   border-radius: 50%;
-  background: var(--glow);
+  background: var(--accent);
   margin-right: 8px;
   vertical-align: middle;
 }
@@ -442,7 +442,7 @@ small {
 .section-heading > a {
   font-size: 11px;
   white-space: nowrap;
-  color: var(--glow);
+  color: var(--accent);
 }
 .atlas {
   margin-bottom: 26px;
@@ -484,14 +484,14 @@ small {
   opacity: 0.65;
 }
 .atlas-star {
-  fill: var(--glow);
-  stroke: var(--glow);
+  fill: var(--accent);
+  stroke: var(--accent);
   stroke-width: 0.045;
   cursor: pointer;
 }
 .atlas-star[data-rating="low"] {
-  fill: var(--mutant);
-  stroke: var(--mutant);
+  fill: var(--secondary);
+  stroke: var(--secondary);
 }
 .atlas-star[data-rating="sparse"] {
   fill: var(--text-muted);
@@ -499,7 +499,7 @@ small {
 }
 .atlas-star:hover,
 .atlas-star:focus-visible {
-  stroke: var(--ink);
+  stroke: var(--annotation);
   stroke-width: 0.11;
   outline: none;
 }
@@ -510,7 +510,7 @@ small {
 }
 .atlas-cost summary {
   cursor: pointer;
-  color: var(--glow-soft);
+  color: var(--accent-soft);
 }
 .atlas-cost p {
   max-width: 90ch;
@@ -535,7 +535,7 @@ small {
   margin-top: 24px;
   background: radial-gradient(
     ellipse at center,
-    color-mix(in srgb, var(--glow) 4%, transparent),
+    color-mix(in srgb, var(--accent) 4%, transparent),
     transparent 70%
   );
   isolation: isolate;
@@ -578,9 +578,9 @@ small {
 }
 .atlas-message .ink-note {
   font:
-    28px var(--font-ink),
+    28px var(--font-ui),
     cursive;
-  color: var(--ink);
+  color: var(--annotation);
 }
 .atlas-message h3 {
   font-size: 32px;
@@ -617,7 +617,7 @@ small {
   margin: 20px 0;
   font-size: 9px;
   color: var(--text-muted);
-  font-family: var(--font-mono);
+  font-family: var(--font-code);
 }
 .atlas-footer > div {
   display: flex;
@@ -629,17 +629,17 @@ small {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--glow);
+  background: var(--accent);
   margin-right: 6px;
 }
 .legend-dot.alternative {
-  background: var(--mutant);
+  background: var(--secondary);
 }
 .legend-dot.dim {
   background: var(--text-muted);
 }
 .legend-dot.pending {
-  background: var(--ink);
+  background: var(--annotation);
 }
 .legend-dot.failed {
   background: var(--danger);
@@ -650,7 +650,7 @@ small {
   left: 15px;
   max-width: min(420px, calc(100% - 30px));
   background: var(--bg);
-  border: 1px solid var(--glow);
+  border: 1px solid var(--accent);
   padding: 18px;
   box-shadow: var(--shadow);
   z-index: 2;
@@ -681,7 +681,7 @@ small {
   flex-direction: column;
   align-items: center;
   justify-content: end;
-  font: 8px var(--font-mono);
+  font: 8px var(--font-code);
   color: var(--text-muted);
 }
 .trend-track {
@@ -692,7 +692,7 @@ small {
   border-bottom: 1px solid var(--border);
 }
 .trend-track span {
-  background: var(--glow-deep);
+  background: var(--accent-strong);
   min-height: 0;
   width: 100%;
   border-radius: 3px 3px 0 0;
@@ -715,7 +715,7 @@ small {
   font-size: 58px;
   font-weight: 400;
   letter-spacing: -0.05em;
-  color: var(--glow);
+  color: var(--accent);
 }
 .health-total span {
   font-size: 12px;
@@ -733,11 +733,11 @@ small {
   font-size: 12px;
 }
 .health-list dd {
-  font-family: var(--font-mono);
+  font-family: var(--font-code);
 }
 .panel > a {
   font-size: 12px;
-  color: var(--glow);
+  color: var(--accent);
 }
 .leaders ol {
   list-style: none;
@@ -769,7 +769,7 @@ small {
 .leaders strong {
   font-size: 28px;
   font-weight: 400;
-  color: var(--glow);
+  color: var(--accent);
 }
 .data-note {
   margin: 22px 0 0;
@@ -779,13 +779,13 @@ small {
   justify-content: space-between;
   padding: 22px 44px;
   border-top: 1px solid var(--border);
-  font: 9px var(--font-mono);
+  font: 9px var(--font-code);
   color: var(--text-muted);
 }
 .count {
   display: inline-block;
-  font: 12px var(--font-mono);
-  color: var(--glow);
+  font: 12px var(--font-code);
+  color: var(--accent);
   border: 1px solid var(--border);
   border-radius: 6px;
   padding: 6px 10px;
@@ -883,8 +883,8 @@ textarea {
   padding: 12px 0;
 }
 .tabs a[aria-current] {
-  color: var(--glow);
-  border-bottom: 2px solid var(--glow);
+  color: var(--accent);
+  border-bottom: 2px solid var(--accent);
 }
 .table-scroll {
   overflow-x: auto;
@@ -949,10 +949,10 @@ td small {
   border-radius: 4px;
   display: inline-block;
   white-space: nowrap;
-  color: var(--glow);
+  color: var(--accent);
 }
 .negative {
-  color: var(--mutant);
+  color: var(--secondary);
 }
 .user-initial {
   display: inline-flex;
@@ -962,7 +962,7 @@ td small {
   height: 30px;
   border-radius: 50%;
   background: var(--surface-active);
-  color: var(--glow);
+  color: var(--accent);
   margin-right: 12px;
 }
 .media-caption {
@@ -980,7 +980,7 @@ td small {
 }
 .prompt {
   white-space: pre-wrap;
-  font: 10px/1.7 var(--font-mono);
+  font: 10px/1.7 var(--font-code);
   margin-top: 12px;
   overflow-wrap: anywhere;
 }
@@ -1010,7 +1010,7 @@ summary {
   align-items: center;
 }
 .pagination a {
-  color: var(--glow);
+  color: var(--accent);
   padding: 8px 0;
 }
 .pagination [aria-disabled] {
@@ -1030,7 +1030,7 @@ summary {
   font-size: 13px;
 }
 .empty-state a {
-  color: var(--glow);
+  color: var(--accent);
 }
 .dialog-overlay {
   position: fixed;
@@ -1088,7 +1088,7 @@ summary {
 }
 .command-dialog [data-selected="true"] {
   background: var(--surface-active);
-  color: var(--glow);
+  color: var(--accent);
 }
 .create-form {
   max-width: 700px;
@@ -1365,7 +1365,7 @@ summary {
   margin: 24px 0;
 }
 .overview-links .panel:hover {
-  border-color: var(--glow);
+  border-color: var(--accent);
 }
 .overview-links h2 {
   font-size: 1.4rem;

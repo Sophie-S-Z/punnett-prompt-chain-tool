@@ -15,7 +15,7 @@ export function Shell({
         <Link href="/chains" className="studio-brand">
           <span aria-hidden="true">p.</span>
           <div>
-            Punnett<small>PROMPT STUDIO</small>
+            Punnett<small>Prompt Studio</small>
           </div>
         </Link>
         <p className="studio-breadcrumb">{title}</p>

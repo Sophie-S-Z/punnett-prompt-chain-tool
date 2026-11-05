@@ -1,12 +1,13 @@
 import Link from "next/link";
+import { WorkspaceTabs } from "@/components/ui/WorkspaceTabs";
 import { requireAdmin } from "@/lib/admin";
 import { UUID, type Chain, type Run, type Option } from "@/lib/studio";
 import { StudioForm, ChainFields, StepFields, MoveStep } from "./StudioForms";
 import { RunPanel } from "./RunPanel";
 import { RecordImage } from "./RecordImage";
 import { Shell } from "./Shell";
-import { GeneStrand } from "./lab/GeneStrand";
-import { specimenCode } from "@/lib/specimenCode";
+import { ChainCanvas } from "./product/ChainCanvas";
+import { captionCode } from "@/lib/captionCode";
 type Query = Record<string, string | string[] | undefined>;
 export async function StudioPage({
   query,
@@ -113,7 +114,7 @@ export async function StudioPage({
       ? "Run history"
       : mode === "mix"
         ? "Prompt chain mix"
-        : "Pipeline studio";
+        : "Prompt chains";
   const href = (p: number) =>
     `?${new URLSearchParams({ q, size: String(size), page: String(p), ...(chainId ? { chain: chainId } : {}) })}`;
   return (
@@ -121,14 +122,13 @@ export async function StudioPage({
       <main id="main" className="page-content studio-page">
         <div className="page-heading">
           <div>
-            <p className="eyebrow">Prompt chains</p>
             <h1>{title}</h1>
             <p>
               {mode === "runs"
                 ? "Real provider outputs, with the prompts and order used for each run."
                 : mode === "mix"
                   ? "Set relative weights, then choose “Use prompt chain mix” when generating. Zero excludes a chain."
-                  : "Build a sequence. Read its prompts. See what each step produces."}
+                  : "Create a chain, edit its steps, and test the results."}
             </p>
           </div>
           {mode !== "runs" && (
@@ -143,23 +143,18 @@ export async function StudioPage({
             </StudioForm>
           )}
         </div>
-        <nav className="studio-tabs" aria-label="Prompt studio">
-          <Link
-            href="/chains"
-            aria-current={mode === "chains" ? "page" : undefined}
-          >
-            Chains & steps
-          </Link>
-          <Link href="/mix" aria-current={mode === "mix" ? "page" : undefined}>
-            Mix
-          </Link>
-          <Link
-            href={runsHref}
-            aria-current={mode === "runs" ? "page" : undefined}
-          >
-            Run history
-          </Link>
-        </nav>
+        <WorkspaceTabs
+          label="Prompt studio"
+          items={[
+            {
+              href: "/chains",
+              label: "Chains & steps",
+              active: mode === "chains",
+            },
+            { href: "/mix", label: "Mix", active: mode === "mix" },
+            { href: runsHref, label: "Run history", active: mode === "runs" },
+          ]}
+        />
         <form className="table-controls" method="get">
           {mode === "runs" && chainId && (
             <input type="hidden" name="chain" value={chainId} />
@@ -235,9 +230,8 @@ export async function StudioPage({
                           <ol className="caption-results">
                             {output.output.map((c, i) => (
                               <li key={i}>
-                                <span className="specimen-code">
-                                  SPC ·{" "}
-                                  {specimenCode(`${r.id}:${s.position}:${i}`)}
+                                <span className="caption-code">
+                                  {captionCode(`${r.id}:${s.position}:${i}`)}
                                 </span>
                                 {c}
                               </li>
@@ -330,7 +324,7 @@ export async function StudioPage({
                 <section className="chain-editor">
                   <header className="editor-heading">
                     <div>
-                      <p className="eyebrow">
+                      <p className="chain-revision">
                         {selected.example ? "Example starter" : "Prompt chain"}{" "}
                         · revision {selected.revision}
                       </p>
@@ -359,7 +353,7 @@ export async function StudioPage({
                       View results from this chain →
                     </Link>
                   </p>
-                  <GeneStrand
+                  <ChainCanvas
                     key={`${selected.id}:${selected.revision}`}
                     chain={selected}
                     models={options.models}
@@ -401,16 +395,21 @@ export async function StudioPage({
                             />
                           </StudioForm>
                         </div>
-                        <dl className="prompt-text">
-                          <div>
-                            <dt>System prompt</dt>
-                            <dd>{step.system_prompt || "No system prompt"}</dd>
-                          </div>
-                          <div>
-                            <dt>User prompt</dt>
-                            <dd>{step.user_prompt}</dd>
-                          </div>
-                        </dl>
+                        <details className="step-prompts">
+                          <summary>View prompts</summary>
+                          <dl className="prompt-text">
+                            <div>
+                              <dt>System prompt</dt>
+                              <dd>
+                                {step.system_prompt || "No system prompt"}
+                              </dd>
+                            </div>
+                            <div>
+                              <dt>User prompt</dt>
+                              <dd>{step.user_prompt}</dd>
+                            </div>
+                          </dl>
+                        </details>
                         <div className="step-footer">
                           <MoveStep chain={selected} step={step} />
                           <StudioForm
