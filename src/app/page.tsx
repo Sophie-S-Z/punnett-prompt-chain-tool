@@ -3,6 +3,7 @@ import { adminAccess } from "@/lib/admin";
 import { AuthControls } from "@/components/AuthControls";
 import { ThemeControl } from "@/components/ThemeControl";
 import { ClearanceRequired } from "@/components/product/ClearanceRequired";
+
 export default async function Home({
   searchParams,
 }: {
@@ -14,12 +15,11 @@ export default async function Home({
   )
     return (
       <main id="main" className="access-screen">
-        <p className="eyebrow">Punnett / Prompt studio</p>
-        <h1>Connecting the workspace.</h1>
-        <p>
-          The prompt studio will be available after its owner finishes the
-          connection settings.
+        <p className="brand">
+          Punnett <span>Prompt Studio</span>
         </p>
+        <h1>Not available yet</h1>
+        <p>The owner has not connected this app to its database.</p>
       </main>
     );
   const access = await adminAccess();
@@ -27,35 +27,25 @@ export default async function Home({
   if (access.state !== "visitor")
     return <ClearanceRequired setup={access.state === "setup"} />;
   return (
-    <main id="main" className="access-screen studio-welcome">
-      <div className="welcome-top">
-        <span className="studio-brand">p.</span>
+    <main id="main" className="access-screen">
+      <div className="access-top">
+        <p className="brand">
+          Punnett <span>Prompt Studio</span>
+        </p>
         <ThemeControl />
       </div>
-      <p className="eyebrow">Punnett / Prompt studio</p>
-      <h1>Build better prompt chains.</h1>
+      <h1>Build better prompt chains</h1>
       <p>
-        Turn an image into captions, one step at a time. Edit the instructions,
-        change the order, and inspect what each step produced.
+        Write the steps that turn an image into captions. Change their order,
+        then test the chain on real images.
       </p>
-      <ol className="welcome-sequence">
-        <li>
-          <span>01</span>Describe the image
-        </li>
-        <li>
-          <span>02</span>Find the comic angle
-        </li>
-        <li>
-          <span>03</span>Write the captions
-        </li>
-      </ol>
       {(await searchParams).auth === "failed" && (
         <p className="error" role="alert">
-          Sign-in was not completed. Please try again.
+          Sign-in did not finish. Please try again.
         </p>
       )}
       <AuthControls />
-      <p className="fine">Google sign-in · Superadmin access only</p>
+      <p className="hint">Only superadmin accounts can sign in.</p>
     </main>
   );
 }

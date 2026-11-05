@@ -1,16 +1,16 @@
 import { AuthControls } from "@/components/AuthControls";
+
 export function ClearanceRequired({ setup = false }: { setup?: boolean }) {
   return (
     <main id="main" className="access-screen">
-      <div className="access-mark" aria-hidden="true">
-        p.
-      </div>
-      <p className="eyebrow">Punnett Prompt studio · Restricted access</p>
-      <h1>Clearance required.</h1>
+      <p className="brand">
+        Punnett <span>Prompt Studio</span>
+      </p>
+      <h1>{setup ? "We could not check your access" : "No access"}</h1>
       <p>
         {setup
-          ? "Your account is signed in. Admin access could not be verified. The database owner must verify the admin API configuration before access is granted."
-          : "Access needs a superadmin role and a verified Google sign-in for this session. If your role was just granted or access was updated, sign out and sign in with Google again. Otherwise, contact the database owner."}
+          ? "You are signed in, but the app could not read your role. Try again later, or ask the database owner to check the setup."
+          : "This tool is for superadmins only. If you just got the role, sign out and sign in again."}
       </p>
       <AuthControls signedIn />
     </main>

@@ -2,60 +2,40 @@
 
 Due: Thursday, November 5, 2026, 2:00 PM EST.
 
-The assignment requires superadmin access. A matrix-admin role alone does not grant access.
+## Requirements
 
-## Rubric map
+| Requirement | Where |
+| --- | --- |
+| Superadmin only | `src/proxy.ts`, `src/lib/admin.ts`, and every server action check `profiles.is_superadmin` through `punnett_admin_access`. |
+| Create, update, delete a chain | "New chain" in the chain list. "Edit" and "Delete chain" next to the chain name. |
+| Create, update, delete a step | "Add step" under the steps. "Edit" and "Delete" on each step. Forms open in place. |
+| Reorder steps | "Move up" and "Move down" on each step. Drag a step in the chain diagram. |
+| Generate media from a chain | "Test this chain" at the bottom of the chain page. Each step's output goes to the next step. The last step writes captions. |
+| View media from one chain | "Past runs" opens `/runs?chain=…`. The title shows the chain name. |
+| Dark, light, system | Theme menu in the top bar. Dark is the default. System follows the OS setting. |
 
-| Requirement                                   | Implementation                                                                                                                            | Evidence and final check                                                                                                                        |
-| --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| Separate GitHub repository and Vercel project | `Sophie-S-Z/punnett-splicer`; Vercel project `punnett-splicer`                                                                            | Existing independent repository and connected project confirmed on November 5.                                                                  |
-| Superadmin-only tool                          | Server session verification, Google-session verification, `profiles.is_superadmin`, request proxy, per-action guards, database RPC guards | Anonymous live RPC denial passes. Database fixtures cover member and non-Google denial. Real browser login and member denial remain required.   |
-| Create, update, delete chains                 | Named chains with descriptions, delete confirmation, revision checks                                                                      | Database and actual-component browser fixture tests.                                                                                            |
-| Create, update, delete steps                  | Separate system/user prompts, model, temperature, input/output types                                                                      | Database and actual-component browser fixture tests.                                                                                            |
-| Reorder steps                                 | Horizontal React Flow strand, drag-to-snap, left/right buttons, accessible list controls                                                  | Both paths call the same atomic revision-checked RPC. Browser fixture checks persistence after reload.                                          |
-| Generate media                                | Real sequential Gemini calls produce caption text from saved source images                                                                | Provider-contract and persistence tests pass. A real authenticated deployed generation remains required. No generated image pixels are claimed. |
-| View media from one chain                     | Chain-specific result links, preserved chain filter during search/pagination, image plus per-step outputs and stable specimen codes       | Browser fixture checks chain-filter navigation. Snapshots preserve history after edits and deletion.                                            |
-| Dark, light, system                           | `next-themes`; dark default; system tracks OS changes                                                                                     | Browser checks cover persistence, OS changes, responsive layout, and accessibility.                                                             |
-| Public Incognito access                       | Application auth remains active while Vercel protection must be off                                                                       | All three apps returned public HTTP 200 after the owner disabled Splicer protection.                                                            |
-| Three commit-specific submission URLs         | Recorded in the release report                                                                                                            | Recheck the final deployment and exact callback registration. Authenticated live generation remains required.                                   |
+## Feedback from the November 5 review
 
-## Additional work
+- Removed all biology and sequence wording.
+- Removed icons, the command palette, the minimap, the revision number, the "Example starter" label, the mix controls, and the footer.
+- Removed all-caps labels and full stops in headings. The product name appears once.
+- Moved "Test this chain" to the bottom of the page. The image choice starts empty.
+- Step and chain forms open in place. They do not open a new page.
+- The chain diagram shows only for chains with two or more steps.
+- The chain search shows only when there are more than ten chains.
+- The runs page shows the chain name.
+- Placeholder text is larger and has more contrast.
 
-- Inspect genes directly on the strand. Pan, zoom, and use the minimap without changing the saved sequence.
-- Run the same chain on up to three real source images. Runs execute sequentially. A failed or interrupted result stops the set.
-- Every image has a separate request ID. Existing duplicate-request and daily-limit protections still apply.
-- Read immutable prompts, model settings, duration, saved output, and errors for each run.
-- Keep a keyboard-accessible editing list beside the visual workflow.
-- Validate pull requests and main pushes with a GitHub Actions build, lint, strict TypeScript, and database/provider tests.
+## How to check it
 
-## Grader walkthrough
-
-1. Open the final Splicer commit URL in an Incognito window.
-2. Verify that the app shows Google sign-in without a Vercel login screen.
-3. Sign in with a real superadmin account.
-4. Create a chain with an image-to-text step.
-5. Add a text-to-text step. Set its output to Caption list.
-6. Edit each prompt and its model settings. Reload to confirm persistence.
-7. Drag a gene to a new position. Reload to confirm the new order.
-8. Use the move buttons to restore an executable image-first, caption-last sequence.
-9. Choose a saved source image. Run the chain.
-10. Open the saved run. Inspect its source image, exact prompts, timings, and actual outputs.
-11. Use View results from this chain. Search without losing the chain filter.
-12. Select two additional images to test the same chain across a set, if free quota permits.
-13. Switch Dark, Light, and System. Reload and change the OS appearance while System is selected.
-14. Delete a temporary step and chain through their confirmation dialogs.
-15. Verify that past runs retain the original prompts and outputs.
-16. Sign out. Verify direct editor, run, asset, and mutation access is denied.
-17. Sign in with an ordinary account. Verify clearance denial and no prompt data.
-
-## Owner configuration
-
-AGENTS.md R4 assigns deployment-protection settings to the owner. Section 3.2 assigns Vercel environment settings to the owner.
-
-In the [Splicer settings](https://vercel.com/sophie-zhangs-projects/punnett-splicer/settings), configure Production and Preview with `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and server-only `GEMINI_API_KEY`. Use the existing staging database and provider free quota. Keep secret values out of source control and chat.
-
-The owner completed environment configuration and disabled Splicer deployment protection on November 5. Keep protection off for all three apps.
-
-Register the stable callback `https://punnett-splicer.vercel.app/auth/callback` in Supabase. Register the final commit URL's exact `/auth/callback` too. Do not add redirect query parameters.
-
-After configuration, deploy again and complete the real-account walkthrough. Tests with isolated data do not establish successful production OAuth or provider generation.
+1. Open the commit URL in a private window. You see the Google sign-in, with no Vercel login.
+2. Sign in with a superadmin account.
+3. Create a chain. Add a step that reads the image and writes text.
+4. Add a second step that reads the output of the step before and writes captions.
+5. Edit a prompt. Reload the page. The change stays.
+6. Move a step with "Move down". Then drag it back in the diagram. Reload. The order stays.
+7. Choose one to three images under "Test this chain". Select "Run".
+8. Select "See the results". Check each step's output and prompts.
+9. Switch between Dark, Light, and System.
+10. Delete a step and then the chain. Past runs stay on the Runs page.
+11. Sign out. Open `/chains`. The app sends you to the sign-in page.

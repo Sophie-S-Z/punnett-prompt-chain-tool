@@ -1,4 +1,4 @@
-export const STEP_SPACING = 280;
+export const STEP_SPACING = 200;
 
 /** Convert a dropped step's canvas position to its bounded, one-based order. */
 export function stepPosition(x: number, count: number): number {

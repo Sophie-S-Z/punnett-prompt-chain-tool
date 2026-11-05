@@ -8,7 +8,7 @@ The installed `prompt_studio_chains_and_runs` migration adds:
 
 | Private table    | Purpose                                                                                       |
 | ---------------- | --------------------------------------------------------------------------------------------- |
-| `studio_chains`  | Editable name, description, example label, relative mix weight, revision                      |
+| `studio_chains`  | Editable name, description, example flag, weight, revision                      |
 | `studio_steps`   | Ordered step settings and prompts, referencing the existing model catalog                     |
 | `studio_runs`    | Source image, originating chain, owner, request ID, immutable snapshot, status and safe error |
 | `studio_outputs` | Sequential validated outputs and durations                                                    |
@@ -17,7 +17,7 @@ The `(chain_id, position)` unique constraint is deferrable. One locked transacti
 
 Six public studio RPCs expose only verified superadmin operations: `page`, `chain`, `mutate`, `begin`, `checkpoint`, and `fail` (all prefixed `punnett_studio_`). Anonymous execution is revoked. Direct private table grants remain revoked. The existing Google-session verifier and `punnett_require_admin` are unchanged. No policy SQL is present.
 
-`punnett_studio_page` returns ordered set rows for PostgREST `count: exact` and `range`. The UI reads pages and all reference/mix pages in chunks of 200. No silent 1,000-row cap is used.
+`punnett_studio_page` returns ordered set rows for PostgREST `count: exact` and `range`. The UI reads pages and all reference pages in chunks of 200. No silent 1,000-row cap is used.
 
 The runner accepts only the existing Google Gemini provider and model identifiers matching `gemini-*`. It uses the fixed Google endpoint, a server environment key, `systemInstruction`, image `inlineData`, and previous text output as a separate part. The final caption step uses the verified REST `responseFormat.text.mimeType = APPLICATION_JSON` contract. No arbitrary URL/provider endpoint is accepted.
 
@@ -27,7 +27,7 @@ Live rollback-only diagnostics passed CRUD, order, conflict handling, checkpoint
 
 ## Week 8 verification on 2026-11-05
 
-No schema or RPC change is required for the visual strand, multi-image test set, or chain-specific result links. Drag and keyboard reorder both call the existing `step.move` mutation with the chain revision and one-based position. The existing deferrable unique constraint and locked mutation own persistence. Each test image uses a distinct request ID and the existing begin/checkpoint/fail sequence. The test set stops on a failed or interrupted result.
+No schema or RPC change is required for the chain diagram, multi-image test set, or chain-specific result links. Drag and keyboard reorder both call the existing `step.move` mutation with the chain revision and one-based position. The existing deferrable unique constraint and locked mutation own persistence. Each test image uses a distinct request ID and the existing begin/checkpoint/fail sequence. The test set stops on a failed or interrupted result.
 
 The deployed REST endpoints denied anonymous execution for all six studio RPCs on November 5. PostgREST also denied access to the private schema. Current authenticated schema inspection through the Supabase connector timed out on repeated attempts. Consequently this update does not claim fresh live authenticated CRUD or provider acceptance. The installed contract above and isolated database tests remain the implementation evidence.
 

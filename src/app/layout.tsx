@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import "@/styles/product.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -16,9 +15,9 @@ const mono = Geist_Mono({
   display: "swap",
 });
 export const metadata: Metadata = {
-  title: "Punnett Prompt Studio | Chains & steps",
+  title: "Punnett Prompt Studio",
   description:
-    "Build, edit, and test sequential prompt chains. Inspect every saved step output.",
+    "Build, edit, and test the prompt chains that turn images into captions.",
   robots: { index: false, follow: false },
   icons: {
     icon: [

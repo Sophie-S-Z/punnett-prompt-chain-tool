@@ -1,46 +1,40 @@
 import Link from "next/link";
 import { AuthControls } from "./AuthControls";
 import { ThemeControl } from "./ThemeControl";
-import { StudioSearch } from "./StudioSearch";
+
 export function Shell({
   children,
-  title,
+  section,
 }: {
   children: React.ReactNode;
-  title: string;
+  section: "chains" | "runs";
 }) {
   return (
     <>
-      <header className="studio-topbar">
-        <Link href="/chains" className="studio-brand">
-          <span aria-hidden="true">p.</span>
-          <div>
-            Punnett<small>Prompt Studio</small>
-          </div>
+      <header className="topbar">
+        <Link href="/chains" className="brand">
+          Punnett <span>Prompt Studio</span>
         </Link>
-        <p className="studio-breadcrumb">{title}</p>
-        <StudioSearch />
-        <ThemeControl />
-        <AuthControls signedIn />
+        <nav className="topnav" aria-label="Main">
+          <Link
+            href="/chains"
+            aria-current={section === "chains" ? "page" : undefined}
+          >
+            Chains
+          </Link>
+          <Link
+            href="/runs"
+            aria-current={section === "runs" ? "page" : undefined}
+          >
+            Runs
+          </Link>
+        </nav>
+        <div className="topbar-end">
+          <ThemeControl />
+          <AuthControls signedIn quiet />
+        </div>
       </header>
       {children}
-      <footer className="studio-footer">
-        <span>Google login · Superadmin workspace</span>
-        <a
-          href="https://punnett-observatory.vercel.app"
-          target="_blank"
-          rel="noreferrer"
-        >
-          Open admin panel ↗
-        </a>
-        <a
-          href="https://punnett-selection.vercel.app"
-          target="_blank"
-          rel="noreferrer"
-        >
-          Open caption studio ↗
-        </a>
-      </footer>
     </>
   );
 }

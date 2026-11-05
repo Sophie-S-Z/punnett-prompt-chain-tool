@@ -9,7 +9,7 @@ test("visitor cannot read or mutate prompt data; icons remain public", async ({
   await expect(page.getByRole("heading", { level: 1 })).toContainText(
     "Build better prompt chains",
   );
-  for (const path of ["/chains", "/mix", "/runs", "/unknown"]) {
+  for (const path of ["/chains", "/runs", "/unknown"]) {
     await page.goto(path);
     await expect(page).toHaveURL(/\/$/);
   }

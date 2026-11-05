@@ -1,13 +1,9 @@
 "use client";
 
-import { Icon } from "@/components/ui/Icon";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
-  Background,
-  Controls,
   Handle,
-  MiniMap,
   Position,
   ReactFlow,
   useNodesState,
@@ -15,165 +11,98 @@ import {
   type NodeProps,
 } from "@xyflow/react";
 import { editStudio } from "@/app/studio-actions";
-import type { Chain, Option, Step } from "@/lib/studio";
+import type { Chain, Step } from "@/lib/studio";
 import { STEP_SPACING, stepPosition } from "@/lib/chain-canvas";
-import { StudioForm, StepFields } from "../StudioForms";
 
-type CanvasStep = Node<
-  {
-    label: string;
-    detail: string;
-    step?: Step;
-    count: number;
-    busy: boolean;
-    move: (step: Step, position: number) => void;
-    inspect: (id: string) => void;
-  },
-  "step"
->;
+type FlowNode = Node<{ label: string; detail: string; step?: Step }, "step">;
 
-/** A step exposes the same persisted order through pointer and keyboard controls. */
-function StepNode({ data, selected }: NodeProps<CanvasStep>) {
-  const step = data.step;
+function StepNode({ data }: NodeProps<FlowNode>) {
   return (
-    <div className={`step-node${selected ? " selected" : ""}`}>
+    <div className={`flow-node${data.step ? "" : " terminal"}`}>
       <Handle type="target" position={Position.Left} isConnectable={false} />
-      <span className="eyebrow">
-        {step ? `Step ${String(step.position).padStart(2, "0")}` : "Sequence"}
-      </span>
-      <button
-        className="step-label nodrag"
-        onClick={() => step && data.inspect(step.id)}
-        disabled={!step}
-      >
+      <strong>
+        {data.step && <span>{data.step.position}</span>}
         {data.label}
-      </button>
-      <p>{data.detail}</p>
-      {step && (
-        <div className="step-moves nodrag">
-          <button
-            type="button"
-            aria-label={`Move ${step.name} left`}
-            disabled={data.busy || step.position === 1}
-            onClick={() => data.move(step, step.position - 1)}
-          >
-            <Icon name="left" />
-          </button>
-          <span>
-            {step.input_kind === "image" ? "Image" : "Text"} →{" "}
-            {step.output_kind === "captions" ? "Captions" : "Text"}
-          </span>
-          <button
-            type="button"
-            aria-label={`Move ${step.name} right`}
-            disabled={data.busy || step.position === data.count}
-            onClick={() => data.move(step, step.position + 1)}
-          >
-            <Icon name="right" />
-          </button>
-        </div>
-      )}
+      </strong>
+      <small>{data.detail}</small>
       <Handle type="source" position={Position.Right} isConnectable={false} />
     </div>
   );
 }
 const nodeTypes = { step: StepNode };
 
-/** The flow is derived from saved order; no drawn connection can change a chain. */
-export function ChainCanvas({
-  chain,
-  models,
-}: {
-  chain: Chain;
-  models: Option[];
-}) {
-  const router = useRouter();
-  const [busy, start] = useTransition();
-  const [message, setMessage] = useState("");
-  const [inspected, setInspected] = useState<string | null>(null);
-  const step = chain.steps.find((s) => s.id === inspected);
-
-  function move(step: Step, position: number) {
-    if (busy) return;
-    setNodes(initialNodes);
-    if (position === step.position) return;
-    const form = new FormData();
-    form.set("chain_id", chain.id);
-    form.set("revision", String(chain.revision));
-    form.set("step_id", step.id);
-    form.set("position", String(position));
-    setMessage("Saving step order…");
-    start(async () => {
-      try {
-        const result = await editStudio("step.move", form);
-        setMessage(
-          result.ok
-            ? `${step.name} moved to position ${position}.`
-            : result.message,
-        );
-        router.refresh();
-      } catch {
-        setMessage("Order could not be saved. Reload to check it.");
-      }
-    });
-  }
-
-  const common = {
-    count: chain.steps.length,
-    busy,
-    move,
-    inspect: setInspected,
-  };
-  const initialNodes: CanvasStep[] = [
+function buildNodes(chain: Chain): FlowNode[] {
+  return [
     {
       id: "input",
       type: "step",
       position: { x: 0, y: 0 },
       draggable: false,
-      data: { ...common, label: "Test images", detail: "Source material" },
+      data: { label: "Image", detail: "Test input" },
     },
     ...chain.steps.map((s) => ({
       id: s.id,
       type: "step" as const,
       position: { x: s.position * STEP_SPACING, y: 0 },
-      data: { ...common, label: s.name, detail: s.model, step: s },
+      data: {
+        label: s.name,
+        detail:
+          s.output_kind === "captions" ? "Writes captions" : "Writes text",
+        step: s,
+      },
     })),
     {
       id: "output",
       type: "step",
       position: { x: (chain.steps.length + 1) * STEP_SPACING, y: 0 },
       draggable: false,
-      data: {
-        ...common,
-        label: "Captions",
-        detail: "Saved captions & traces",
-      },
+      data: { label: "Captions", detail: "Saved to runs" },
     },
   ];
-  const [nodes, setNodes, onNodesChange] =
-    useNodesState<CanvasStep>(initialNodes);
-  const displayedNodes = nodes.map((n) => ({
-    ...n,
-    data: { ...n.data, ...common },
-  }));
-  const edges = initialNodes.slice(1).map((n, i) => ({
-    id: `${initialNodes[i].id}-${n.id}`,
-    source: initialNodes[i].id,
+}
+
+/** Shows the saved order. Drag a step sideways to move it. */
+export function ChainCanvas({ chain }: { chain: Chain }) {
+  const router = useRouter();
+  const [busy, start] = useTransition();
+  const [message, setMessage] = useState("");
+  const initial = buildNodes(chain);
+  const [nodes, setNodes, onNodesChange] = useNodesState<FlowNode>(initial);
+  const edges = initial.slice(1).map((n, i) => ({
+    id: `${initial[i].id}-${n.id}`,
+    source: initial[i].id,
     target: n.id,
-    type: "smoothstep",
+    ariaLabel: `${initial[i].data.label} to ${n.data.label}`,
   }));
 
+  function move(step: Step, position: number) {
+    setNodes(initial);
+    if (busy || position === step.position) return;
+    const form = new FormData();
+    form.set("chain_id", chain.id);
+    form.set("revision", String(chain.revision));
+    form.set("step_id", step.id);
+    form.set("position", String(position));
+    start(async () => {
+      try {
+        const result = await editStudio("step.move", form);
+        setMessage(
+          result.ok
+            ? `Moved ${step.name} to step ${position}.`
+            : result.message,
+        );
+        router.refresh();
+      } catch {
+        setMessage("The new order was not saved. Reload the page to check it.");
+      }
+    });
+  }
+
   return (
-    <section className="chain-panel" aria-label="Prompt chain canvas">
-      <header>
-        <div>
-          <h2>Prompt chain</h2>
-        </div>
-        <p className="fine">Drag steps to change their order.</p>
-      </header>
-      <div className="step-canvas">
-        <ReactFlow<CanvasStep>
-          nodes={displayedNodes}
+    <section className="flow" aria-label="Chain diagram">
+      <div className="flow-canvas">
+        <ReactFlow<FlowNode>
+          nodes={nodes}
           edges={edges}
           nodeTypes={nodeTypes}
           onNodesChange={onNodesChange}
@@ -181,9 +110,23 @@ export function ChainCanvas({
           nodesFocusable={false}
           edgesFocusable={false}
           edgesReconnectable={false}
+          elementsSelectable={false}
           deleteKeyCode={null}
           nodesDraggable={!busy}
-          onNodeClick={(_, node) => node.data.step && setInspected(node.id)}
+          panOnDrag={chain.steps.length > 2}
+          zoomOnScroll={false}
+          zoomOnPinch={false}
+          zoomOnDoubleClick={false}
+          preventScrolling={false}
+          onNodeClick={(_, node) =>
+            node.data.step &&
+            document.getElementById(`step-${node.id}`)?.scrollIntoView({
+              block: "center",
+              behavior: matchMedia("(prefers-reduced-motion: reduce)").matches
+                ? "auto"
+                : "smooth",
+            })
+          }
           onNodeDragStop={(_, node) =>
             node.data.step &&
             move(
@@ -191,67 +134,18 @@ export function ChainCanvas({
               stepPosition(node.position.x, chain.steps.length),
             )
           }
-          fitView
-          fitViewOptions={{ padding: 0.2, minZoom: 0.35, maxZoom: 0.85 }}
-          minZoom={0.2}
-          maxZoom={1.5}
-          aria-label="Ordered prompt chain. Select a step to inspect it."
-        >
-          <Background gap={24} color="var(--border)" />
-          <Controls showInteractive={false} />
-          <MiniMap
-            style={{ width: 150, height: 90 }}
-            nodeColor="var(--accent)"
-            maskColor="transparent"
-            pannable
-            zoomable
-          />
-        </ReactFlow>
+          defaultViewport={{ x: 1, y: 24, zoom: 1 }}
+          translateExtent={[
+            [-8, -24],
+            [(chain.steps.length + 1) * STEP_SPACING + 176, 80],
+          ]}
+          minZoom={1}
+          maxZoom={1}
+        />
       </div>
-      <p className="fine chain-status" role="status">
-        {busy
-          ? "Saving step order…"
-          : message ||
-            "Pan or zoom to explore. Use the arrow buttons to move a step by keyboard."}
+      <p className="hint" role="status">
+        {busy ? "Saving the new order…" : message || "Drag a step to move it."}
       </p>
-      {step && (
-        <aside className="step-inspector" aria-label="Step details">
-          <div className="row-actions">
-            <h3>
-              {step.position}. {step.name}
-            </h3>
-            <button
-              type="button"
-              className="text-button"
-              onClick={() => setInspected(null)}
-            >
-              Close inspector
-            </button>
-          </div>
-          <p className="fine">
-            {step.model} · temperature {step.temperature}
-          </p>
-          <dl className="prompt-text">
-            <dt>System prompt</dt>
-            <dd>{step.system_prompt || "No system prompt"}</dd>
-            <dt>User prompt</dt>
-            <dd>{step.user_prompt}</dd>
-          </dl>
-          <StudioForm
-            operation="step.update"
-            chain={chain}
-            step={step}
-            base="/chains"
-            label="Edit selected step"
-          >
-            <StepFields
-              step={step}
-              models={models}
-              first={step.position === 1}
-            />
-          </StudioForm>
-        </aside>
-      )}
     </section>
   );
 }

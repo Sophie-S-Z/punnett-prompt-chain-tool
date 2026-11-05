@@ -2,7 +2,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-export function AuthControls({ signedIn = false }: { signedIn?: boolean }) {
+export function AuthControls({
+  signedIn = false,
+  quiet = false,
+}: {
+  signedIn?: boolean;
+  quiet?: boolean;
+}) {
   const [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   const router = useRouter();
@@ -38,9 +44,13 @@ export function AuthControls({ signedIn = false }: { signedIn?: boolean }) {
     }
   }
   return (
-    <div>
-      <button className="button" onClick={() => void run()} disabled={busy}>
-        {busy ? "One moment…" : signedIn ? "Sign out" : "Sign in with Google"}
+    <div className="auth-controls">
+      <button
+        className={quiet ? "button ghost" : "button"}
+        onClick={() => void run()}
+        disabled={busy}
+      >
+        {busy ? "Please wait…" : signedIn ? "Sign out" : "Sign in with Google"}
       </button>
       {error && (
         <p role="alert" className="error">

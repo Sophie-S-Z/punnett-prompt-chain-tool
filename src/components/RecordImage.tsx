@@ -16,14 +16,14 @@ function Preview({
   if (!available || failed)
     return (
       <span className="image-unavailable" role="status">
-        Original image unavailable
+        Image not available
         {available && (
           <button
             type="button"
             className="text-button"
             onClick={() => setFailed(false)}
           >
-            Try loading again
+            Try again
           </button>
         )}
       </span>
@@ -46,7 +46,6 @@ function Preview({
         loading={large ? "eager" : "lazy"}
         onError={() => setFailed(true)}
       />
-      {large && <small>Open full image ↗</small>}
     </a>
   );
 }
