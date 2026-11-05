@@ -5,6 +5,7 @@ test("visitor cannot read or mutate prompt data; icons remain public", async ({
   context,
 }) => {
   await page.goto("/");
+  await expect(page.getByLabel("Appearance")).toHaveValue("night");
   await expect(page.getByRole("heading", { level: 1 })).toContainText(
     "One good prompt",
   );
@@ -29,6 +30,11 @@ test("visitor cannot read or mutate prompt data; icons remain public", async ({
     expect(response.status()).toBe(200);
     expect(response.headers()["content-type"]).toContain(mime);
   }
+  await page.getByLabel("Appearance").selectOption("system");
+  await page.emulateMedia({ colorScheme: "light" });
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "lights-on");
+  await page.emulateMedia({ colorScheme: "dark" });
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "night");
 });
 test("appearance follows system, persists selection, and remains accessible at mobile and desktop sizes", async ({
   page,

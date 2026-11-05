@@ -5,6 +5,8 @@ import { StudioForm, ChainFields, StepFields, MoveStep } from "./StudioForms";
 import { RunPanel } from "./RunPanel";
 import { RecordImage } from "./RecordImage";
 import { Shell } from "./Shell";
+import { GeneStrand } from "./lab/GeneStrand";
+import { specimenCode } from "@/lib/specimenCode";
 type Query = Record<string, string | string[] | undefined>;
 export async function StudioPage({
   query,
@@ -159,6 +161,9 @@ export async function StudioPage({
           </Link>
         </nav>
         <form className="table-controls" method="get">
+          {mode === "runs" && chainId && (
+            <input type="hidden" name="chain" value={chainId} />
+          )}
           <label className="search-field">
             Search {mode === "runs" ? "runs" : "chains"}
             <input
@@ -229,7 +234,13 @@ export async function StudioPage({
                         {Array.isArray(output?.output) ? (
                           <ol className="caption-results">
                             {output.output.map((c, i) => (
-                              <li key={i}>{c}</li>
+                              <li key={i}>
+                                <span className="specimen-code">
+                                  SPC ·{" "}
+                                  {specimenCode(`${r.id}:${s.position}:${i}`)}
+                                </span>
+                                {c}
+                              </li>
                             ))}
                           </ol>
                         ) : (
@@ -343,6 +354,16 @@ export async function StudioPage({
                       />
                     </div>
                   </header>
+                  <p>
+                    <Link href={`${runsHref}?chain=${selected.id}`}>
+                      View results from this chain →
+                    </Link>
+                  </p>
+                  <GeneStrand
+                    key={`${selected.id}:${selected.revision}`}
+                    chain={selected}
+                    models={options.models}
+                  />
                   <ol className="step-sequence">
                     {selected.steps.map((step) => (
                       <li key={step.id} className="step-card">

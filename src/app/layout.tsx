@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { ThemeProvider } from "@/components/ThemeProvider";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 const sans = IBM_Plex_Sans({
@@ -28,8 +29,6 @@ export const metadata: Metadata = {
     apple: "/apple-touch-icon.png",
   },
 };
-const themeScript =
-  "try{var t=localStorage.getItem('punnett-studio-theme');if(['night','lights-on','system'].includes(t))document.documentElement.dataset.theme=t;}catch(e){}";
 export default function RootLayout({
   children,
 }: {
@@ -38,18 +37,15 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      data-theme="system"
+      data-theme="night"
       suppressHydrationWarning
       className={`${sans.variable} ${mono.variable}`}
     >
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
-      </head>
       <body>
         <a className="skip" href="#main">
           Skip to content
         </a>
-        {children}
+        <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
   );
