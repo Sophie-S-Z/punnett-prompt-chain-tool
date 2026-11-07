@@ -1,4 +1,5 @@
 "use client";
+import { motion, useReducedMotion } from "motion/react";
 import { useRef, useState, useTransition } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -32,6 +33,7 @@ export function RunPanel({
   const requests = useRef(new Map<string, string>());
   const router = useRouter();
   const issue = validateChain(chain);
+  const reduce = useReducedMotion();
   const label = (id: string) => images.find((i) => i.id === id)?.label ?? "";
   const visible = showAll ? images : images.slice(0, FIRST_VIEW);
 
@@ -166,7 +168,10 @@ export function RunPanel({
           </p>
         )}
         {results.map((result, index) => (
-          <p
+          <motion.p
+            initial={reduce ? false : { opacity: 0.8, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: reduce ? 0 : 0.2 }}
             key={result.id ?? index}
             className={result.ok ? "success" : "error"}
             role={result.ok ? "status" : "alert"}
@@ -176,7 +181,7 @@ export function RunPanel({
             {result.id && (
               <Link href={`/runs?q=${result.id}`}>See the results</Link>
             )}
-          </p>
+          </motion.p>
         ))}
       </div>
     </section>

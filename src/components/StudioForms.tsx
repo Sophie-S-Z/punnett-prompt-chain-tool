@@ -1,4 +1,5 @@
 "use client";
+import { LayoutGroup, motion, useReducedMotion } from "motion/react";
 import * as Dialog from "@radix-ui/react-dialog";
 import {
   useEffect,
@@ -67,8 +68,12 @@ function InlineForm({
   children: ReactNode;
 }) {
   const { pending, error, setError, submit } = useStudioAction();
+  const reduce = useReducedMotion();
   return (
-    <form
+    <motion.form
+      initial={false}
+      layout="position"
+      transition={{ duration: reduce ? 0 : 0.2 }}
       className="inline-form"
       onChange={() => setError("")}
       onKeyDown={(e) => {
@@ -99,7 +104,21 @@ function InlineForm({
           Cancel
         </button>
       </div>
-    </form>
+    </motion.form>
+  );
+}
+
+export function StepList({
+  id,
+  children,
+}: {
+  id: string;
+  children: ReactNode;
+}) {
+  return (
+    <LayoutGroup id={id}>
+      <ol className="steps">{children}</ol>
+    </LayoutGroup>
   );
 }
 
@@ -124,7 +143,7 @@ export function ChainFields({ chain }: { chain?: Chain }) {
           required
           maxLength={150}
           autoFocus
-          placeholder="For example, Field notes"
+          placeholder="For example, Everyday captions"
           defaultValue={chain?.name ?? ""}
         />
       </label>
@@ -213,23 +232,37 @@ export function StepFields({
         </small>
       </div>
       <div className="field-pair">
-        <label>
-          Model
-          <select
-            name="model_id"
-            required
-            defaultValue={step?.model_id ?? models[0]?.id ?? ""}
-          >
-            <option value="" disabled>
-              Choose a model
-            </option>
-            {models.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.label}
+        <div className="field">
+          <label>
+            Model
+            <select
+              name="model_id"
+              required
+              defaultValue={step?.model_id ?? models[0]?.id ?? ""}
+            >
+              <option value="" disabled>
+                Choose a model
               </option>
-            ))}
-          </select>
-        </label>
+              {models.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          {models.length < 2 && (
+            <small>
+              <a
+                href="https://punnett-observatory.vercel.app/models"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Manage models
+                <span className="visually-hidden"> (opens in a new tab)</span>
+              </a>
+            </small>
+          )}
+        </div>
         <label>
           Temperature
           <input
@@ -336,8 +369,15 @@ export function StepItem({
   const [editing, setEditing] = useState(false);
   const trigger = useReturnFocus(editing);
   const router = useRouter();
+  const reduce = useReducedMotion();
   return (
-    <li className="step" id={`step-${step.id}`}>
+    <motion.li
+      initial={false}
+      layout={reduce ? false : "position"}
+      transition={{ layout: { type: "spring", stiffness: 420, damping: 38 } }}
+      className="step"
+      id={`step-${step.id}`}
+    >
       <span className="step-index" aria-hidden="true">
         {step.position}
       </span>
@@ -403,7 +443,7 @@ export function StepItem({
           </>
         )}
       </div>
-    </li>
+    </motion.li>
   );
 }
 

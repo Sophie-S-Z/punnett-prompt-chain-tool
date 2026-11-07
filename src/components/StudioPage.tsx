@@ -1,7 +1,14 @@
 import Link from "next/link";
+import { loadPage } from "@/lib/page-window";
 import { requireAdmin } from "@/lib/admin";
 import { UUID, type Chain, type Run, type Option } from "@/lib/studio";
-import { AddStep, ChainHeader, NewChain, StepItem } from "./StudioForms";
+import {
+  AddStep,
+  ChainHeader,
+  NewChain,
+  StepItem,
+  StepList,
+} from "./StudioForms";
 import { RunPanel } from "./RunPanel";
 import { RecordImage } from "./RecordImage";
 import { Shell } from "./Shell";
@@ -40,23 +47,8 @@ async function readPage(
         { count: "exact" },
       )
       .range((p - 1) * size, p * size - 1);
-  let page = requested;
-  let result = await read(page);
-  if (result.status === 416) {
-    page = 1;
-    result = await read(page);
-  }
-  if (result.error || result.count === null)
-    throw new Error("The prompt chains could not be loaded.");
-  const last = Math.max(1, Math.ceil(result.count / size));
-  if (page > last) {
-    page = last;
-    result = await read(page);
-    if (result.error) throw new Error("The prompt chains could not be loaded.");
-  }
-  const total: number = result.count ?? 0;
-  const rows: { record: unknown }[] = result.data ?? [];
-  return { rows, total, page, last };
+  const result = await loadPage<{ record: unknown }>(read, requested, size);
+  return { ...result, total: result.total };
 }
 
 /** Reads every model and every finished image, 200 rows at a time. */
@@ -269,7 +261,7 @@ export async function StudioPage({
                     write captions.
                   </p>
                 )}
-                <ol className="steps">
+                <StepList id={selected.id}>
                   {selected.steps.map((step) => (
                     <StepItem
                       key={step.id}
@@ -278,7 +270,7 @@ export async function StudioPage({
                       models={options.models}
                     />
                   ))}
-                </ol>
+                </StepList>
                 <AddStep
                   key={`add:${selected.id}`}
                   chain={selected}

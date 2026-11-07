@@ -13,6 +13,7 @@ async function write(name, text) {
 }
 // Remove only the retired generated spec, inside the fixed local fixture directory.
 await rm(resolve(folder, "specs/strand.spec.ts"), { force: true });
+await rm(resolve(folder, "app/mix"), { recursive: true, force: true });
 const chainId = "00110000-0000-4000-8000-000000000001",
   modelId = "00110000-0000-4000-8000-000000000002";
 const step = {
@@ -88,7 +89,7 @@ await write("run-calls.json", "[]");
 await write(
   "fixture-admin.ts",
   `// @ts-nocheck
-import {readFile} from 'node:fs/promises';export async function requireAdmin():Promise<any>{return {client:{rpc(name,args){const load=async()=>JSON.parse(await readFile(${statePath},'utf8'));if(name==='punnett_studio_chain')return load().then(rows=>({data:rows.find(c=>c.id===args.id_input)??null,error:null}));return {range:async(a,b)=>{let rows=[];if(name==='punnett_studio_page'&&args.kind_input==='chains'){rows=(await load()).filter(c=>!args.search_input||c.name.includes(args.search_input)).map(c=>({id:c.id,record:{...c,step_count:c.steps.length}}));}else if(name==='punnett_admin_records'&&args.kind_input==='models')rows=[{record:{id:'${modelId}',name:'gemini-3.5-flash-lite'}}];else if(name==='punnett_admin_records'&&args.kind_input==='images')rows=[1,2,3].map(n=>({record:{id:'00110000-0000-4000-8000-'+String(n).padStart(12,'0'),title:'Test image '+n,status:'completed',storage_path:'fixture/image.jpg',created_at:'2026-11-05T12:00:00Z'}}));return {data:rows.slice(a,b+1),count:rows.length,error:null,status:200};}};}}};}
+import {readFile} from 'node:fs/promises';export async function requireAdmin():Promise<any>{return {client:{rpc(name,args){const load=async()=>JSON.parse(await readFile(${statePath},'utf8'));if(name==='punnett_studio_chain')return load().then(rows=>({data:rows.find(c=>c.id===args.id_input)??null,error:null}));return {range:async(a,b)=>{let rows=[];if(name==='punnett_studio_page'&&args.kind_input==='chains'){rows=(await load()).filter(c=>!args.search_input||c.name.includes(args.search_input)).map(c=>({id:c.id,record:{...c,step_count:c.steps.length}}));}else if(name==='punnett_admin_records'&&args.kind_input==='models')rows=[{record:{id:'${modelId}',name:'gemini-3.5-flash-lite'}},{record:{id:'00110000-0000-4000-8000-000000000099',name:'Second fixture model'}}];else if(name==='punnett_admin_records'&&args.kind_input==='images')rows=[1,2,3].map(n=>({record:{id:'00110000-0000-4000-8000-'+String(n).padStart(12,'0'),title:'Test image '+n,status:'completed',storage_path:'fixture/image.jpg',created_at:'2026-11-05T12:00:00Z'}}));return {data:rows.slice(a,b+1),count:rows.length,error:null,status:200};}};}}};}
 `,
 );
 await write(
@@ -111,7 +112,7 @@ for (const route of ["chains", "runs"])
   );
 await write(
   "playwright.config.ts",
-  `import {defineConfig} from '@playwright/test';export default defineConfig({testDir:'./specs',workers:1,timeout:120000,expect:{timeout:15000},reporter:'list',outputDir:${JSON.stringify(resolve(root, "test-results/studio-ui"))},use:{baseURL:'http://127.0.0.1:${port}',headless:true}});`,
+  `import {defineConfig} from '@playwright/test';export default defineConfig({testDir:'./specs',workers:1,timeout:120000,expect:{timeout:15000},reporter:'list',outputDir:${JSON.stringify(resolve(root, "test-results/studio-ui"))},use:{baseURL:'http://127.0.0.1:${port}',channel:process.env.PUNNETT_BROWSER_CHANNEL||undefined,headless:true}});`,
 );
 await write(
   "specs/studio.spec.ts",
@@ -119,12 +120,15 @@ await write(
 test('inline editing: steps, order, chain details, create and delete, accessible at all widths',async({page})=>{
 const titles=page.locator('.steps .step h3');
 await page.goto('/chains',{waitUntil:'networkidle'});
+await page.setViewportSize({width:1440,height:1000});await page.screenshot({path:'.vercel/studio-desktop.png',fullPage:true});
 await page.getByRole('button',{name:'Edit Describe',exact:true}).click();
 await page.getByRole('textbox',{name:'User prompt',exact:true}).fill('Updated prompt fixture');
+await page.getByRole('combobox',{name:'Model',exact:true}).selectOption('00110000-0000-4000-8000-000000000099');
 await page.getByRole('button',{name:'Save step',exact:true}).click();
 await expect(page.getByRole('button',{name:'Save step',exact:true})).toHaveCount(0);
 await expect(page.getByRole('button',{name:'Edit Describe',exact:true})).toBeFocused();
 await page.reload({waitUntil:'networkidle'});await expect(page.locator('.steps .prompt').first()).toHaveText('Updated prompt fixture');
+await page.getByRole('button',{name:'Edit Describe',exact:true}).click();await expect(page.getByRole('combobox',{name:'Model',exact:true})).toHaveValue('00110000-0000-4000-8000-000000000099');await page.getByRole('button',{name:'Cancel',exact:true}).click();
 await page.getByRole('button',{name:'Move Describe down',exact:true}).click();
 await expect(titles).toHaveText([/Caption draft$/,/Describe$/]);
 await page.reload({waitUntil:'networkidle'});await expect(titles).toHaveText([/Caption draft$/,/Describe$/]);
@@ -159,7 +163,7 @@ await page.getByRole('dialog').getByRole('button',{name:'Delete',exact:true}).cl
 await expect(page.getByRole('dialog')).toHaveCount(0);
 await expect(page.locator('.chain-nav li')).toHaveCount(1);
 for(const theme of ['night','lights-on']){await page.getByLabel('Appearance').selectOption(theme);
-for(const width of [320,768,1440]){await page.setViewportSize({width,height:1000});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);const scan=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa','wcag22aa']).analyze();expect(scan.violations.map(v=>({id:v.id,targets:v.nodes.map(n=>n.target)}))).toEqual([]);}}
+for(const width of [320,768,1440]){await page.setViewportSize({width,height:1000});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);const scan=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa','wcag22aa']).analyze();expect(scan.violations.map(v=>({id:v.id,targets:v.nodes.map(n=>n.target)}))).toEqual([]);if(width===320)await page.screenshot({path:'.vercel/studio-'+theme+'-mobile.png',fullPage:true});}}
 });`,
 );
 await write(
