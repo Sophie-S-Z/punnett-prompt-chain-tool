@@ -318,7 +318,7 @@ test("pagination covers 1,203 real fixture rows without truncation, including fi
 });
 
 test("direct image uploads require Google superadmin, owned storage, and remain usable without caption generation", async () => {
-  const path = ADMIN + "/studio/11111111-1111-4111-8111-111111111111.jpg";
+  const path = ADMIN + "/11111111-1111-4111-8111-111111111111.jpg";
   await db.exec("reset role");
   await db.query("insert into storage.objects values('caption-images',$1)", [
     path,
@@ -338,12 +338,17 @@ test("direct image uploads require Google superadmin, owned storage, and remain 
   await session();
   await assert.rejects(() =>
     db.query("select public.punnett_studio_upload($1,'Bad')", [
-      MEMBER + "/studio/11111111-1111-4111-8111-111111111111.jpg",
+      MEMBER + "/11111111-1111-4111-8111-111111111111.jpg",
     ]),
   );
   await assert.rejects(() =>
     db.query("select public.punnett_studio_upload($1,'Missing')", [
-      ADMIN + "/studio/22222222-2222-4222-8222-222222222222.jpg",
+      ADMIN + "/22222222-2222-4222-8222-222222222222.jpg",
+    ]),
+  );
+  await assert.rejects(() =>
+    db.query("select public.punnett_studio_upload($1,'Nested path denied')", [
+      ADMIN + "/studio/11111111-1111-4111-8111-111111111111.jpg",
     ]),
   );
   const uploaded = (

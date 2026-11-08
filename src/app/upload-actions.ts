@@ -51,13 +51,22 @@ export async function uploadStudioImage(form: FormData) {
   }
   if (jpeg.length > 2 * 1024 * 1024)
     return { ok: false as const, message: "Choose a smaller image." };
-  const path = `${access.user!.id}/studio/${randomUUID()}.jpg`;
+  const path = `${access.user!.id}/${randomUUID()}.jpg`;
   try {
     const stored = await access.client.storage
       .from("caption-images")
       .upload(path, jpeg, { contentType: "image/jpeg", upsert: false });
-    if (stored.error)
-      return { ok: false as const, message: "The upload failed. Try again." };
+    if (stored.error) {
+      console.error(
+        "[punnett:image-upload-rejected]",
+        JSON.stringify({ status: stored.error.statusCode }),
+      );
+      return {
+        ok: false as const,
+        message:
+          "Image storage rejected the upload. Please contact the app owner if retrying fails.",
+      };
+    }
     const label =
       file.name.replace(/\.[^.]+$/, "").slice(0, 200) || "Uploaded image";
     const saved = await access.client.rpc("punnett_studio_upload", {

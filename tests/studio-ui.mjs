@@ -88,24 +88,40 @@ for (const name of [
 const statePath = JSON.stringify(resolve(folder, "state.json"));
 const callsPath = JSON.stringify(resolve(folder, "run-calls.json"));
 await write("run-calls.json", "[]");
+const uploadRowsPath = JSON.stringify(resolve(folder, "upload-rows.json"));
+await write("upload-rows.json", "[]");
+const uploadSource = (await readFile("src/app/upload-actions.ts", "utf8"))
+  .replace('"@/lib/admin"', '"./upload-admin"')
+  .replace('"next/cache"', '"./upload-admin"');
+await write("stub-upload.ts", uploadSource);
 await write(
-  "stub-upload.ts",
-  `'use server';export async function uploadStudioImage(form:FormData){if(!(form.get('image') instanceof File))return {ok:false as const,message:'Choose an image'};return {ok:true as const,id:'00110000-0000-4000-8000-000000000099',label:'Uploaded fixture'};}`,
+  "upload-admin.ts",
+  `import {readFile,writeFile} from 'node:fs/promises';
+export function revalidatePath(_path:string){}
+export async function adminAccess():Promise<any>{return {state:'admin' as const,user:{id:'00110000-0000-4000-8000-000000000001'},client:{storage:{from(){return {async upload(path:string,bytes:Buffer,options:{contentType:string}){if(!/^00110000-0000-4000-8000-000000000001\\/[0-9a-f-]{36}\\.jpg$/.test(path)||options.contentType!=='image/jpeg'||bytes[0]!==255||bytes[1]!==216)return {error:{statusCode:'403'}};return {error:null};},async remove(){return {error:null}}};}},async rpc(name:string,args:{path_input:string;title_input:string}){if(name!=='punnett_studio_upload')throw new Error('Unexpected RPC');const rows=JSON.parse(await readFile(${uploadRowsPath},'utf8'));const id=crypto.randomUUID();rows.push({id,label:args.title_input,path:args.path_input});await writeFile(${uploadRowsPath},JSON.stringify(rows));return {data:id,error:null};}}};}`,
 );
+const sharp = (await import("sharp")).default;
+const validJpeg = (
+  await sharp({
+    create: { width: 20, height: 20, channels: 3, background: "white" },
+  })
+    .jpeg()
+    .toBuffer()
+).toString("base64");
 await write(
   "specs/upload.spec.ts",
   `import {test,expect} from '@playwright/test';test('upload rejects corrupt content, recovers, selects new image and runs it',async({page})=>{
 await page.route('**/asset/**',route=>route.fulfill({contentType:'image/svg+xml',body:'<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"></svg>'}));
 await page.goto('/chains');const input=page.getByLabel('Upload your own image');await input.setInputFiles({name:'broken.png',mimeType:'image/png',buffer:Buffer.from('not an image')});await expect(page.locator('.upload-image [role=alert]')).toBeVisible();
-await input.setInputFiles({name:'fixture.png',mimeType:'image/png',buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+j5uQAAAAASUVORK5CYII=','base64')});
-await expect(page.getByRole('checkbox',{name:'Uploaded fixture',exact:true})).toBeChecked();await expect(page.locator('.upload-image [role=alert]')).toHaveCount(0);await page.getByRole('button',{name:'Run',exact:true}).click();await expect(page.getByRole('link',{name:'See the results',exact:true})).toBeVisible();
+await input.setInputFiles({name:'Uploaded fixture.jpg',mimeType:'image/jpeg',buffer:Buffer.from('${validJpeg}','base64')});
+await expect(page.getByRole('checkbox',{name:'Uploaded fixture',exact:true})).toBeChecked();await expect(page.locator('.upload-image [role=alert]')).toHaveCount(0);await page.reload();await page.getByRole('checkbox',{name:'Uploaded fixture',exact:true}).check();await page.getByRole('button',{name:'Run',exact:true}).click();await expect(page.getByRole('link',{name:'See the results',exact:true})).toBeVisible();
 });`,
 );
 
 await write(
   "fixture-admin.ts",
   `// @ts-nocheck
-import {readFile} from 'node:fs/promises';export async function requireAdmin():Promise<any>{return {client:{rpc(name,args){const load=async()=>JSON.parse(await readFile(${statePath},'utf8'));if(name==='punnett_studio_chain')return load().then(rows=>({data:rows.find(c=>c.id===args.id_input)??null,error:null}));return {range:async(a,b)=>{let rows=[];if(name==='punnett_studio_page'&&args.kind_input==='chains'){rows=(await load()).filter(c=>!args.search_input||c.name.includes(args.search_input)).map(c=>({id:c.id,record:{...c,step_count:c.steps.length}}));}else if(name==='punnett_admin_records'&&args.kind_input==='models')rows=[{record:{id:'${modelId}',name:'gemini-3.5-flash-lite'}},{record:{id:'00110000-0000-4000-8000-000000000099',name:'Second fixture model'}}];else if(name==='punnett_admin_records'&&args.kind_input==='images')rows=[1,2,3].map(n=>({record:{id:'00110000-0000-4000-8000-'+String(n).padStart(12,'0'),title:'Test image '+n,status:'completed',storage_path:'fixture/image.jpg',created_at:'2026-11-05T12:00:00Z'}}));return {data:rows.slice(a,b+1),count:rows.length,error:null,status:200};}};}}};}
+import {readFile} from 'node:fs/promises';export async function requireAdmin():Promise<any>{return {client:{rpc(name,args){const load=async()=>JSON.parse(await readFile(${statePath},'utf8'));if(name==='punnett_studio_chain')return load().then(rows=>({data:rows.find(c=>c.id===args.id_input)??null,error:null}));return {range:async(a,b)=>{let rows=[];if(name==='punnett_studio_uploaded_images'){rows=JSON.parse(await readFile(${uploadRowsPath},'utf8'));}else if(name==='punnett_studio_page'&&args.kind_input==='chains'){rows=(await load()).filter(c=>!args.search_input||c.name.includes(args.search_input)).map(c=>({id:c.id,record:{...c,step_count:c.steps.length}}));}else if(name==='punnett_admin_records'&&args.kind_input==='models')rows=[{record:{id:'${modelId}',name:'gemini-3.5-flash-lite'}},{record:{id:'00110000-0000-4000-8000-000000000099',name:'Second fixture model'}}];else if(name==='punnett_admin_records'&&args.kind_input==='images')rows=[1,2,3].map(n=>({record:{id:'00110000-0000-4000-8000-'+String(n).padStart(12,'0'),title:'Test image '+n,status:'completed',storage_path:'fixture/image.jpg',created_at:'2026-11-05T12:00:00Z'}}));return {data:rows.slice(a,b+1),count:rows.length,error:null,status:200};}};}}};}
 `,
 );
 await write(

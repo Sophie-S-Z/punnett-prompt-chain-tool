@@ -11,7 +11,7 @@ declare result uuid;
 begin
  perform public.punnett_require_admin();
  perform pg_advisory_xact_lock(hashtext('studio-upload'),hashtext(auth.uid()::text));
- if path_input !~ ('^'||auth.uid()::text||'/studio/[0-9a-f-]{36}\.jpg$') or length(title_input)>200 then raise exception 'Invalid image' using errcode='23514'; end if;
+ if path_input !~ ('^'||auth.uid()::text||'/[0-9a-f-]{36}\.jpg$') or length(title_input)>200 then raise exception 'Invalid image' using errcode='23514'; end if;
  if not exists(select 1 from storage.objects where bucket_id='caption-images' and name=path_input) then raise exception 'Upload missing' using errcode='23514'; end if;
  if (select count(*) from punnett_private.studio_uploads where owner_id=auth.uid() and created_at>now()-interval '24 hours')>=30 then raise exception 'upload_limit' using errcode='54000'; end if;
  insert into public.punnett_images(owner_id,mime_type,storage_path,title) values(auth.uid(),'image/jpeg',path_input,title_input) returning id into result;

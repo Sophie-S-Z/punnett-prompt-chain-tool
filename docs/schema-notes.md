@@ -42,3 +42,8 @@ Verified the actual `punnett_private.studio_*`, `w7_*`, and public caption/image
 ## Direct prompt-chain image uploads - November 7, 2026
 
 Verified live `punnett_images` columns, storage path resolver, and the complete run-start definition before the migration. `studio_direct_image_uploads` adds an owner-only private upload registry and two guarded RPCs. Registration checks Google/superadmin access, an existing object in the caption-images bucket, the caller's path prefix, and a 30-upload daily limit. Runs accept a caller's registered upload as well as existing completed caption images. No RLS policies changed. No service-role credentials are used. Uploaded images remain available to their owner on reload; they do not manufacture a caption-generation record or public captions.
+
+
+### Storage-path correction
+
+Owner-reported JPEG failures were traced to the introduced /studio/ subfolder. The existing owner-installed storage INSERT contract requires user-id/file-id.jpg. The server and registration RPC now use that shape. The corrective migration changes only the function, never a policy. The stronger browser regression executes the real upload action against a strict storage-path adapter.
