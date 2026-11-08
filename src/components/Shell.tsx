@@ -13,7 +13,7 @@ export function Shell({
     <>
       <header className="topbar">
         <Link href="/chains" className="brand">
-          Punnett <span>Prompt Studio</span>
+          Punnett <span>Prompt Chain Tool</span>
         </Link>
         <nav className="topnav" aria-label="Main">
           <Link

@@ -16,7 +16,7 @@ export default async function Home({
     return (
       <main id="main" className="access-screen">
         <p className="brand">
-          Punnett <span>Prompt Studio</span>
+          Punnett <span>Prompt Chain Tool</span>
         </p>
         <h1>Not available yet</h1>
         <p>The owner has not connected this app to its database.</p>
@@ -30,7 +30,7 @@ export default async function Home({
     <main id="main" className="access-screen">
       <div className="access-top">
         <p className="brand">
-          Punnett <span>Prompt Studio</span>
+          Punnett <span>Prompt Chain Tool</span>
         </p>
         <ThemeControl />
       </div>

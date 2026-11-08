@@ -37,3 +37,8 @@ Rechecked primary library contracts: [React Flow component API](https://reactflo
 ## 2026-11-05 interface and historical content review
 
 Verified the actual `punnett_private.studio_*`, `w7_*`, and public caption/image/generation columns before reviewing saved content. Owner explicitly approved retiring historical wording. Migration `retire_legacy_ui_content` keeps 153 original records in `punnett_private.ui_content_archive(source,record_id,row_data,saved_at)`. Client roles have no archive grants. Replaced content is labeled as retired, never presented as newly generated. Retired catalog generations are archived; 28 real captions remain public. Current prompt chains, run snapshots, and step outputs contain no retired vocabulary. No row-security policy, auth rule, or service-role configuration changed. The migration SQL and recovery guidance are maintained in the Splicer repository.
+
+
+## Direct prompt-chain image uploads - November 7, 2026
+
+Verified live `punnett_images` columns, storage path resolver, and the complete run-start definition before the migration. `studio_direct_image_uploads` adds an owner-only private upload registry and two guarded RPCs. Registration checks Google/superadmin access, an existing object in the caption-images bucket, the caller's path prefix, and a 30-upload daily limit. Runs accept a caller's registered upload as well as existing completed caption images. No RLS policies changed. No service-role credentials are used. Uploaded images remain available to their owner on reload; they do not manufacture a caption-generation record or public captions.

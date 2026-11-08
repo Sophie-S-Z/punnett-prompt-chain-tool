@@ -15,7 +15,7 @@ const mono = Geist_Mono({
   display: "swap",
 });
 export const metadata: Metadata = {
-  title: "Punnett Prompt Studio",
+  title: "Punnett Prompt Chain Tool",
   description:
     "Build, edit, and test the prompt chains that turn images into captions.",
   robots: { index: false, follow: false },

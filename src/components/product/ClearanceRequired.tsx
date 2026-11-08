@@ -4,7 +4,7 @@ export function ClearanceRequired({ setup = false }: { setup?: boolean }) {
   return (
     <main id="main" className="access-screen">
       <p className="brand">
-        Punnett <span>Prompt Studio</span>
+        Punnett <span>Prompt Chain Tool</span>
       </p>
       <h1>{setup ? "We could not check your access" : "No access"}</h1>
       <p>

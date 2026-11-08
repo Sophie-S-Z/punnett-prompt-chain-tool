@@ -93,6 +93,19 @@ async function readOptions(client: Client) {
       if (!r.data.length) throw new Error("The image list was incomplete.");
     }
   }
+  for (let offset = 0; ; offset += 200) {
+    const result = await client
+      .rpc("punnett_studio_uploaded_images", {}, { count: "exact" })
+      .range(offset, offset + 199);
+    if (result.error || result.count === null)
+      throw new Error("Your uploaded images could not be loaded.");
+    for (const image of result.data)
+      if (!options.images.some((i) => i.id === image.id))
+        options.images.push(image);
+    if (offset + result.data.length >= result.count) break;
+    if (!result.data.length)
+      throw new Error("The uploaded image list was incomplete.");
+  }
   return options;
 }
 

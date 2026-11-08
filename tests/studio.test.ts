@@ -55,7 +55,7 @@ before(async () => {
     await db.exec(await readFile(new URL(file, import.meta.url), "utf8"));
   await db.query("insert into auth.users values($1),($2)", [ADMIN, MEMBER]);
   await db.query(
-    "insert into public.profiles(id,is_superadmin) values($1,true),($2,false)",
+    "insert into public.profiles(id,is_superadmin,is_matrix_admin) values($1,true,false),($2,false,true)",
     [ADMIN, MEMBER],
   );
   image = (
@@ -71,6 +71,15 @@ before(async () => {
   await db.exec(
     await readFile(
       new URL("../docs/prompt-studio.sql", import.meta.url),
+      "utf8",
+    ),
+  );
+  await db.exec(
+    "create schema storage; create table storage.objects(bucket_id text,name text);",
+  );
+  await db.exec(
+    await readFile(
+      new URL("../docs/direct-image-uploads.sql", import.meta.url),
       "utf8",
     ),
   );
@@ -306,4 +315,64 @@ test("pagination covers 1,203 real fixture rows without truncation, including fi
   assert.equal((await read(25, 600)).length, 25);
   assert.equal((await read(25, 1200)).length, 3);
   assert.equal((await read(2000, 0)).length, 1203);
+});
+
+test("direct image uploads require Google superadmin, owned storage, and remain usable without caption generation", async () => {
+  const path = ADMIN + "/studio/11111111-1111-4111-8111-111111111111.jpg";
+  await db.exec("reset role");
+  await db.query("insert into storage.objects values('caption-images',$1)", [
+    path,
+  ]);
+  for (const [user, provider, role] of [
+    ["", "google", "anon"],
+    [MEMBER, "google", "authenticated"],
+    [ADMIN, "email", "authenticated"],
+  ]) {
+    await session(user, provider, role);
+    await assert.rejects(() =>
+      db.query("select public.punnett_studio_upload($1,'Uploaded test')", [
+        path,
+      ]),
+    );
+  }
+  await session();
+  await assert.rejects(() =>
+    db.query("select public.punnett_studio_upload($1,'Bad')", [
+      MEMBER + "/studio/11111111-1111-4111-8111-111111111111.jpg",
+    ]),
+  );
+  await assert.rejects(() =>
+    db.query("select public.punnett_studio_upload($1,'Missing')", [
+      ADMIN + "/studio/22222222-2222-4222-8222-222222222222.jpg",
+    ]),
+  );
+  const uploaded = (
+    await db.query<{ id: string }>(
+      "select public.punnett_studio_upload($1,'Uploaded test') id",
+      [path],
+    )
+  ).rows[0].id;
+  assert.ok(
+    (
+      await db.query<{ id: string }>(
+        "select * from public.punnett_studio_uploaded_images()",
+      )
+    ).rows.some((x) => x.id === uploaded),
+  );
+  await db.exec("reset role");
+  assert.equal(
+    (
+      await db.query(
+        "select 1 from public.punnett_generations where image_id=$1",
+        [uploaded],
+      )
+    ).rows.length,
+    0,
+  );
+  await session();
+  const run = await db.query(
+    "select public.punnett_studio_begin($1,$2,gen_random_uuid())",
+    [chain, uploaded],
+  );
+  assert.equal(run.rows.length, 1);
 });

@@ -4,6 +4,7 @@ import { useRef, useState, useTransition } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { ImageUpload } from "./ImageUpload";
 import { runStudio } from "@/app/studio-actions";
 import { validateChain, type Chain, type Option } from "@/lib/studio";
 
@@ -25,6 +26,12 @@ export function RunPanel({
   chain: Chain;
   images: Option[];
 }) {
+  const [uploaded, setUploaded] = useState<Option[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const options = [
+    ...uploaded,
+    ...images.filter((i) => !uploaded.some((u) => u.id === i.id)),
+  ];
   const [chosen, setChosen] = useState<string[]>([]);
   const [showAll, setShowAll] = useState(false);
   const [pending, start] = useTransition();
@@ -34,8 +41,8 @@ export function RunPanel({
   const router = useRouter();
   const issue = validateChain(chain);
   const reduce = useReducedMotion();
-  const label = (id: string) => images.find((i) => i.id === id)?.label ?? "";
-  const visible = showAll ? images : images.slice(0, FIRST_VIEW);
+  const label = (id: string) => options.find((i) => i.id === id)?.label ?? "";
+  const visible = showAll ? options : options.slice(0, FIRST_VIEW);
 
   function toggle(id: string, on: boolean) {
     setChosen((old) => (on ? [...old, id] : old.filter((x) => x !== id)));
@@ -44,7 +51,7 @@ export function RunPanel({
   }
 
   function run() {
-    if (pending || !chosen.length || issue) return;
+    if (pending || uploading || !chosen.length || issue) return;
     setResults([]);
     start(async () => {
       for (const [index, imageId] of chosen.entries()) {
@@ -92,13 +99,21 @@ export function RunPanel({
       </div>
       {issue ? (
         <p className="hint">{issue}</p>
-      ) : !images.length ? (
-        <p className="hint">
-          There are no images to test with. Upload one in the caption app first.
-        </p>
       ) : (
         <>
-          <fieldset className="image-picker" disabled={pending}>
+          <ImageUpload
+            disabled={pending}
+            onBusy={setUploading}
+            onUploaded={(image) => {
+              setUploaded((old) => [image, ...old]);
+              setChosen((old) =>
+                old.length < MAX_IMAGES ? [...old, image.id] : old,
+              );
+              setResults([]);
+              requests.current.clear();
+            }}
+          />
+          <fieldset className="image-picker" disabled={pending || uploading}>
             <legend>
               Choose up to {MAX_IMAGES} images
               {chosen.length > 0 && (
@@ -132,13 +147,13 @@ export function RunPanel({
                 );
               })}
             </div>
-            {images.length > FIRST_VIEW && (
+            {options.length > FIRST_VIEW && (
               <button
                 type="button"
                 className="text-button"
                 onClick={() => setShowAll((v) => !v)}
               >
-                {showAll ? "Show fewer" : `Show all ${images.length} images`}
+                {showAll ? "Show fewer" : `Show all ${options.length} images`}
               </button>
             )}
           </fieldset>
@@ -146,7 +161,7 @@ export function RunPanel({
             <button
               type="button"
               className="button"
-              disabled={pending || !chosen.length}
+              disabled={pending || uploading || !chosen.length}
               onClick={run}
             >
               {pending
@@ -164,7 +179,7 @@ export function RunPanel({
       <div aria-live="polite" className="results">
         {pending && (
           <p role="status" className="hint">
-            {progress} Each image can take up to a minute.
+            {progress} Longer chains can take a few minutes.
           </p>
         )}
         {results.map((result, index) => (

@@ -67,6 +67,7 @@ for (const name of [
   "StudioPage",
   "StudioForms",
   "RunPanel",
+  "ImageUpload",
   "product/ChainCanvas",
 ]) {
   let source = await readFile(
@@ -79,6 +80,7 @@ for (const name of [
       '"@/app/studio-actions"',
       name.startsWith("product/") ? '"../stub-actions"' : '"./stub-actions"',
     );
+  source = source.replace('"@/app/upload-actions"', '"./stub-upload"');
   for (const component of ["Shell", "RecordImage"])
     source = source.replace(`"./${component}"`, `"@/components/${component}"`);
   await write(`${name}.tsx`, source);
@@ -86,6 +88,20 @@ for (const name of [
 const statePath = JSON.stringify(resolve(folder, "state.json"));
 const callsPath = JSON.stringify(resolve(folder, "run-calls.json"));
 await write("run-calls.json", "[]");
+await write(
+  "stub-upload.ts",
+  `'use server';export async function uploadStudioImage(form:FormData){if(!(form.get('image') instanceof File))return {ok:false as const,message:'Choose an image'};return {ok:true as const,id:'00110000-0000-4000-8000-000000000099',label:'Uploaded fixture'};}`,
+);
+await write(
+  "specs/upload.spec.ts",
+  `import {test,expect} from '@playwright/test';test('upload rejects corrupt content, recovers, selects new image and runs it',async({page})=>{
+await page.route('**/asset/**',route=>route.fulfill({contentType:'image/svg+xml',body:'<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"></svg>'}));
+await page.goto('/chains');const input=page.getByLabel('Upload your own image');await input.setInputFiles({name:'broken.png',mimeType:'image/png',buffer:Buffer.from('not an image')});await expect(page.locator('.upload-image [role=alert]')).toBeVisible();
+await input.setInputFiles({name:'fixture.png',mimeType:'image/png',buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+j5uQAAAAASUVORK5CYII=','base64')});
+await expect(page.getByRole('checkbox',{name:'Uploaded fixture',exact:true})).toBeChecked();await expect(page.locator('.upload-image [role=alert]')).toHaveCount(0);await page.getByRole('button',{name:'Run',exact:true}).click();await expect(page.getByRole('link',{name:'See the results',exact:true})).toBeVisible();
+});`,
+);
+
 await write(
   "fixture-admin.ts",
   `// @ts-nocheck
