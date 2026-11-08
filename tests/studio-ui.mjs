@@ -108,6 +108,77 @@ const validJpeg = (
     .jpeg()
     .toBuffer()
 ).toString("base64");
+const formatInputs = await Promise.all(
+  [
+    [
+      "JPEG",
+      "image/jpeg",
+      sharp({
+        create: { width: 24, height: 24, channels: 3, background: "red" },
+      }).jpeg(),
+    ],
+    [
+      "PNG",
+      "image/png",
+      sharp({
+        create: { width: 24, height: 24, channels: 3, background: "red" },
+      }).png(),
+    ],
+    [
+      "transparent PNG",
+      "image/png",
+      sharp({
+        create: {
+          width: 24,
+          height: 24,
+          channels: 4,
+          background: { r: 0, g: 0, b: 0, alpha: 0 },
+        },
+      }).png(),
+    ],
+    [
+      "WebP",
+      "image/webp",
+      sharp({
+        create: { width: 24, height: 24, channels: 3, background: "red" },
+      }).webp(),
+    ],
+    [
+      "transparent WebP",
+      "image/webp",
+      sharp({
+        create: {
+          width: 24,
+          height: 24,
+          channels: 4,
+          background: { r: 0, g: 0, b: 0, alpha: 0 },
+        },
+      }).webp({ lossless: true }),
+    ],
+    [
+      "GIF",
+      "image/gif",
+      sharp({
+        create: { width: 24, height: 24, channels: 3, background: "red" },
+      }).gif(),
+    ],
+    [
+      "animated GIF",
+      "image/gif",
+      sharp(
+        Buffer.concat([
+          Buffer.alloc(24 * 24 * 3).fill(Buffer.from([255, 0, 0])),
+          Buffer.alloc(24 * 24 * 3).fill(Buffer.from([0, 0, 255])),
+        ]),
+        { raw: { width: 24, height: 48, channels: 3, pageHeight: 24 } },
+      ).gif({ loop: 0, delay: [100, 100] }),
+    ],
+  ].map(async ([name, type, image]) => ({
+    name,
+    type,
+    base64: (await image.toBuffer()).toString("base64"),
+  })),
+);
 await write(
   "specs/upload.spec.ts",
   `import {test,expect} from '@playwright/test';test('upload rejects corrupt content, recovers, selects new image and runs it',async({page})=>{
@@ -115,6 +186,11 @@ await page.route('**/asset/**',route=>route.fulfill({contentType:'image/svg+xml'
 await page.goto('/chains');const input=page.getByLabel('Upload your own image');await input.setInputFiles({name:'broken.png',mimeType:'image/png',buffer:Buffer.from('not an image')});await expect(page.locator('.upload-image [role=alert]')).toBeVisible();
 await input.setInputFiles({name:'Uploaded fixture.jpg',mimeType:'image/jpeg',buffer:Buffer.from('${validJpeg}','base64')});
 await expect(page.getByRole('checkbox',{name:'Uploaded fixture',exact:true})).toBeChecked();await expect(page.locator('.upload-image [role=alert]')).toHaveCount(0);await page.reload();await page.getByRole('checkbox',{name:'Uploaded fixture',exact:true}).check();await page.getByRole('button',{name:'Run',exact:true}).click();await expect(page.getByRole('link',{name:'See the results',exact:true})).toBeVisible();
+});
+for(const input of ${JSON.stringify(formatInputs)}) test('real upload action accepts '+input.name+' and preserves it after reload',async({page})=>{
+await page.route('**/asset/**',route=>route.fulfill({contentType:'image/svg+xml',body:'<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"></svg>'}));
+await page.goto('/chains');const label='Format '+input.name;await page.getByLabel('Upload your own image').setInputFiles({name:label+'.'+input.type.split('/')[1],mimeType:input.type,buffer:Buffer.from(input.base64,'base64')});
+await expect(page.getByRole('checkbox',{name:label,exact:true})).toBeChecked();await expect(page.locator('.upload-image [role=alert]')).toHaveCount(0);await page.reload();await page.getByRole('checkbox',{name:label,exact:true}).check();await page.getByRole('button',{name:'Run',exact:true}).click();await expect(page.getByRole('link',{name:'See the results',exact:true})).toBeVisible();
 });`,
 );
 

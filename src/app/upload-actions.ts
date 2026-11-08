@@ -1,5 +1,5 @@
 "use server";
-import sharp from "sharp";
+import { prepareImage } from "@/lib/prepare-image";
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { adminAccess } from "@/lib/admin";
@@ -25,24 +25,7 @@ export async function uploadStudioImage(form: FormData) {
     };
   let jpeg: Buffer;
   try {
-    const image = sharp(Buffer.from(await file.arrayBuffer()), {
-      limitInputPixels: 40000000,
-      animated: false,
-    });
-    const meta = await image.metadata();
-    if (!meta.format || !["jpeg", "png", "webp", "gif"].includes(meta.format))
-      throw new Error();
-    jpeg = await image
-      .rotate()
-      .resize({
-        width: 1600,
-        height: 1600,
-        fit: "inside",
-        withoutEnlargement: true,
-      })
-      .flatten({ background: "white" })
-      .jpeg({ quality: 80 })
-      .toBuffer();
+    jpeg = await prepareImage(file);
   } catch {
     return {
       ok: false as const,

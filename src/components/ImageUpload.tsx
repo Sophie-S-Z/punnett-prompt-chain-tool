@@ -66,7 +66,7 @@ export function ImageUpload({
       </label>
       <p className="hint">
         JPEG, PNG, WebP, or GIF. Up to 8 MB. Images are resized before upload
-        and saved for future runs.
+        and saved for future runs. Animated images use a still frame.
       </p>
       {busy && <p role="status">Uploading...</p>}
       {error && (

@@ -33,7 +33,7 @@ Only users with `profiles.is_superadmin = true` and a Google sign-in can open th
 
 ## Deployment
 
-Vercel project: `punnett-splicer`. Keep deployment protection off. Add each deployment's exact `/auth/callback` URL to the Supabase redirect list.
+Vercel project: `punnett-prompt-chain-tool`. Keep deployment protection off. Keep both the old and new project-scoped `/auth/callback` patterns in the Supabase redirect list while older submissions are ungraded.
 
 The [Week 8 rubric map](docs/week8-rubric.md) lists each requirement and how to check it.
 
@@ -42,3 +42,9 @@ The [Week 8 rubric map](docs/week8-rubric.md) lists each requirement and how to 
 Uploads are validated and resized locally, then decoded again on the server and saved in private storage. A guarded registration function records the image without generating unrelated public captions. The upload registry is owner-only; the server and database require Google superadmin access. The 30-upload daily limit is separate from the ten-run daily limit. See `docs/direct-image-uploads.sql` and `docs/schema-notes.md`. The migration is already installed; do not rerun it.
 
 Hosted validation is manual-only while GitHub Actions minutes are exhausted. Use `npm run check` locally. Run `PUNNETT_BROWSER_CHANNEL=chrome npm run test:ui` with an installed Chrome, using the equivalent environment-variable syntax for your shell. Fixture tests never call Gemini or modify live data.
+
+## Verified image formats
+
+JPEG, PNG, WebP, and GIF are accepted. Transparent PNG/WebP images flatten onto white; animated images become one still image. Inputs are resized, oriented and converted to a bounded JPEG for private storage and captioning. The same decoder is covered by format, transparency, animation, metadata, size and invalid-input tests in this app.
+
+Repository and Vercel project: `punnett-prompt-chain-tool`. Earlier deployment URLs and stable-domain aliases are retained for grading compatibility. Local checkout folder names are unchanged. GitHub Actions remains manual-only.
