@@ -56,7 +56,11 @@ function buildNodes(chain: Chain): FlowNode[] {
       type: "step",
       position: { x: (chain.steps.length + 1) * STEP_SPACING, y: 0 },
       draggable: false,
-      data: { label: "Captions", detail: "Saved to runs" },
+      data: {
+        label:
+          chain.steps.at(-1)?.output_kind === "captions" ? "Captions" : "Text",
+        detail: "Saved to runs",
+      },
     },
   ];
 }

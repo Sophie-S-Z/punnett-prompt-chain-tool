@@ -47,3 +47,8 @@ Verified live `punnett_images` columns, storage path resolver, and the complete 
 ### Storage-path correction
 
 Owner-reported JPEG failures were traced to the introduced /studio/ subfolder. The existing owner-installed storage INSERT contract requires user-id/file-id.jpg. The server and registration RPC now use that shape. The corrective migration changes only the function, never a policy. The stronger browser regression executes the real upload action against a strict storage-path adapter.
+
+
+### Text-ending chain tests
+
+The owner chain has three text outputs. Live run-start validation required a caption final step unnecessarily. Checkpoints already validate both strings and caption arrays and mark either final type complete. allow_text_ending_prompt_chain_runs removes only that final-caption precondition. Existing auth, images, quota and ordering constraints remain; saved chain contents are not edited.

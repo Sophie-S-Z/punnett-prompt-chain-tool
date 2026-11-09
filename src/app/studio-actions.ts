@@ -3,7 +3,7 @@ import { revalidatePath } from "next/cache";
 import { adminAccess } from "@/lib/admin";
 import { UUID, studioInput, weightedChoice, type Chain } from "@/lib/studio";
 import { parseStepOutput, stepRequest } from "@/lib/studio-provider";
-type Result = { ok: boolean; message: string; id?: string };
+type Result = { ok: boolean; message: string; id?: string; revision?: number };
 export async function editStudio(
   operation: string,
   form: FormData,
@@ -64,6 +64,7 @@ export async function runStudio(form: FormData): Promise<Result> {
   let chain = String(form.get("chain_id") ?? ""),
     id: string | undefined,
     position = 0,
+    runRevision: number | undefined,
     providerStatus: number | undefined;
   const image = String(form.get("image_id") ?? ""),
     request = String(form.get("request_id") ?? "");
@@ -117,6 +118,7 @@ export async function runStudio(form: FormData): Promise<Result> {
   try {
     id = start.data.id;
     const snapshot = start.data.snapshot as Chain;
+    runRevision = snapshot.revision;
     const path = await access.client.rpc("punnett_admin_image_path", {
       id_input: image,
     });
@@ -175,7 +177,8 @@ export async function runStudio(form: FormData): Promise<Result> {
     return {
       ok: true,
       id,
-      message: `${snapshot.name} completed. Open the run to view every step and its captions.`,
+      revision: runRevision,
+      message: `${snapshot.name} completed. Open the run to view every step and its output.`,
     };
   } catch (cause) {
     const reason = cause instanceof Error ? cause.message : "unknown";
@@ -220,6 +223,6 @@ export async function runStudio(form: FormData): Promise<Result> {
         /* Leave an interrupted run visible if persistence is unavailable. */
       }
     revalidatePath("/", "layout");
-    return { ok: false, id, message };
+    return { ok: false, id, revision: runRevision, message };
   }
 }

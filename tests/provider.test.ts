@@ -100,7 +100,11 @@ test("server form validation rejects malformed operations and missing/invalid nu
   form.set("name", "x".repeat(151));
   assert.ok(studioInput("chain.create", form).error);
   const chain = { steps: [step] } as Chain;
-  assert.ok(validateChain(chain));
+  assert.equal(validateChain(chain), null);
+  assert.ok(validateChain({ steps: [] } as unknown as Chain));
+  assert.ok(
+    validateChain({ steps: [{ ...step, input_kind: "previous" }] } as Chain),
+  );
   assert.equal(
     validateChain({ steps: [{ ...step, output_kind: "captions" }] } as Chain),
     null,

@@ -48,3 +48,7 @@ Hosted validation is manual-only while GitHub Actions minutes are exhausted. Use
 JPEG, PNG, WebP, and GIF are accepted. Transparent PNG/WebP images flatten onto white; animated images become one still image. Inputs are resized, oriented and converted to a bounded JPEG for private storage and captioning. The same decoder is covered by format, transparency, animation, metadata, size and invalid-input tests in this app.
 
 Repository and Vercel project: `punnett-prompt-chain-tool`. Earlier deployment URLs and stable-domain aliases are retained for grading compatibility. Local checkout folder names are unchanged. GitHub Actions remains manual-only.
+
+## Testing a new chain
+
+You can upload an image while adding steps. Run becomes available when at least one configured step exists: the first reads the image and subsequent steps read previous output. A final step can return text or captions. The allow-text-chain-runs migration is already installed. Existing prompts do not need conversion to caption arrays.

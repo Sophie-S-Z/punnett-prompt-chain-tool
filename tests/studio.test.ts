@@ -83,6 +83,12 @@ before(async () => {
       "utf8",
     ),
   );
+  await db.exec(
+    await readFile(
+      new URL("../docs/allow-text-chain-runs.sql", import.meta.url),
+      "utf8",
+    ),
+  );
   model = (
     await db.query<{ id: string }>(
       "select id from punnett_private.w7_models limit 1",
@@ -380,4 +386,110 @@ test("direct image uploads require Google superadmin, owned storage, and remain 
     [chain, uploaded],
   );
   assert.equal(run.rows.length, 1);
+});
+
+test("a newly created text-only chain runs, validates its text output and preserves the snapshot", async () => {
+  await db.exec("reset role");
+  await db.exec(
+    "update punnett_private.studio_runs set status='failed',completed_at=now() where status='pending'",
+  );
+  await session();
+  const id = await mutate(
+    "chain.create",
+    { name: "Text chain regression" },
+    null,
+  );
+  await assert.rejects(
+    () =>
+      db.query("select public.punnett_studio_begin($1,$2,gen_random_uuid())", [
+        id,
+        image,
+      ]),
+    { code: "23514" },
+  );
+  await mutate(
+    "step.create",
+    {
+      name: "Describe",
+      user_prompt: "Describe this image",
+      system_prompt: "",
+      input_kind: "image",
+      output_kind: "text",
+      model_id: model,
+      temperature: 0.7,
+    },
+    id,
+  );
+  await db.exec("reset role");
+  await db.exec(
+    "update punnett_private.studio_runs set status='failed',completed_at=now() where status='pending'",
+  );
+  await session();
+  const run = (
+    await db.query<{ value: { id: string } }>(
+      "select public.punnett_studio_begin($1,$2,gen_random_uuid()) value",
+      [id, image],
+    )
+  ).rows[0].value.id;
+  await assert.rejects(
+    () =>
+      db.query("select public.punnett_studio_checkpoint($1,1,$2::jsonb,1)", [
+        run,
+        JSON.stringify(["Wrong", "Type"]),
+      ]),
+    { code: "23514" },
+  );
+  await db.query("select public.punnett_studio_checkpoint($1,1,$2::jsonb,2)", [
+    run,
+    JSON.stringify("A real text-shaped fixture output"),
+  ]);
+  const saved = (
+    await db.query<{
+      record: {
+        status: string;
+        outputs: { output: string }[];
+        snapshot: { steps: { output_kind: string }[] };
+      };
+    }>("select record from public.punnett_studio_page('runs') where id=$1", [
+      run,
+    ])
+  ).rows[0].record;
+  assert.equal(saved.status, "completed");
+  assert.equal(saved.outputs[0].output, "A real text-shaped fixture output");
+  assert.equal(saved.snapshot.steps[0].output_kind, "text");
+  for (let n = 2; n <= 3; n++)
+    await mutate(
+      "step.create",
+      {
+        name: "Text step " + n,
+        user_prompt: "Use the previous output",
+        system_prompt: "",
+        input_kind: "previous",
+        output_kind: "text",
+        model_id: model,
+        temperature: 0.7,
+      },
+      id,
+    );
+  const three = (
+    await db.query<{ value: { id: string } }>(
+      "select public.punnett_studio_begin($1,$2,gen_random_uuid()) value",
+      [id, image],
+    )
+  ).rows[0].value.id;
+  for (let n = 1; n <= 3; n++)
+    await db.query(
+      "select public.punnett_studio_checkpoint($1,$2,$3::jsonb,2)",
+      [three, n, JSON.stringify("Text output " + n)],
+    );
+  const completed = (
+    await db.query<{
+      record: { status: string; outputs: { output: string }[] };
+    }>("select record from public.punnett_studio_page('runs') where id=$1", [
+      three,
+    ])
+  ).rows[0].record;
+  assert.equal(completed.status, "completed");
+  assert.equal(completed.outputs.length, 3);
+  assert.equal(completed.outputs[2].output, "Text output 3");
 });

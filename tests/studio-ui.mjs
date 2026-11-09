@@ -90,6 +90,10 @@ const callsPath = JSON.stringify(resolve(folder, "run-calls.json"));
 await write("run-calls.json", "[]");
 const uploadRowsPath = JSON.stringify(resolve(folder, "upload-rows.json"));
 await write("upload-rows.json", "[]");
+const imageAvailabilityPath = JSON.stringify(
+  resolve(folder, "images-enabled.json"),
+);
+await write("images-enabled.json", "true");
 const uploadSource = (await readFile("src/app/upload-actions.ts", "utf8"))
   .replace('"@/lib/admin"', '"./upload-admin"')
   .replace('"next/cache"', '"./upload-admin"');
@@ -197,7 +201,7 @@ await expect(page.getByRole('checkbox',{name:label,exact:true})).toBeChecked();a
 await write(
   "fixture-admin.ts",
   `// @ts-nocheck
-import {readFile} from 'node:fs/promises';export async function requireAdmin():Promise<any>{return {client:{rpc(name,args){const load=async()=>JSON.parse(await readFile(${statePath},'utf8'));if(name==='punnett_studio_chain')return load().then(rows=>({data:rows.find(c=>c.id===args.id_input)??null,error:null}));return {range:async(a,b)=>{let rows=[];if(name==='punnett_studio_uploaded_images'){rows=JSON.parse(await readFile(${uploadRowsPath},'utf8'));}else if(name==='punnett_studio_page'&&args.kind_input==='chains'){rows=(await load()).filter(c=>!args.search_input||c.name.includes(args.search_input)).map(c=>({id:c.id,record:{...c,step_count:c.steps.length}}));}else if(name==='punnett_admin_records'&&args.kind_input==='models')rows=[{record:{id:'${modelId}',name:'gemini-3.5-flash-lite'}},{record:{id:'00110000-0000-4000-8000-000000000099',name:'Second fixture model'}}];else if(name==='punnett_admin_records'&&args.kind_input==='images')rows=[1,2,3].map(n=>({record:{id:'00110000-0000-4000-8000-'+String(n).padStart(12,'0'),title:'Test image '+n,status:'completed',storage_path:'fixture/image.jpg',created_at:'2026-11-05T12:00:00Z'}}));return {data:rows.slice(a,b+1),count:rows.length,error:null,status:200};}};}}};}
+import {readFile} from 'node:fs/promises';export async function requireAdmin():Promise<any>{return {client:{rpc(name,args){const load=async()=>JSON.parse(await readFile(${statePath},'utf8'));if(name==='punnett_studio_chain')return load().then(rows=>({data:rows.find(c=>c.id===args.id_input)??null,error:null}));return {range:async(a,b)=>{let rows=[];if(name==='punnett_studio_uploaded_images'){rows=JSON.parse(await readFile(${uploadRowsPath},'utf8'));}else if(name==='punnett_studio_page'&&args.kind_input==='chains'){rows=(await load()).filter(c=>!args.search_input||c.name.includes(args.search_input)).map(c=>({id:c.id,record:{...c,step_count:c.steps.length}}));}else if(name==='punnett_admin_records'&&args.kind_input==='models')rows=[{record:{id:'${modelId}',name:'gemini-3.5-flash-lite'}},{record:{id:'00110000-0000-4000-8000-000000000099',name:'Second fixture model'}}];else if(name==='punnett_admin_records'&&args.kind_input==='images')rows=(JSON.parse(await readFile(${imageAvailabilityPath},'utf8'))?[1,2,3]:[]).map(n=>({record:{id:'00110000-0000-4000-8000-'+String(n).padStart(12,'0'),title:'Test image '+n,status:'completed',storage_path:'fixture/image.jpg',created_at:'2026-11-05T12:00:00Z'}}));return {data:rows.slice(a,b+1),count:rows.length,error:null,status:200};}};}}};}
 `,
 );
 await write(
@@ -308,6 +312,27 @@ await expect(page.getByRole('button',{name:'Run on 3 images',exact:true})).toBeE
 const calls=JSON.parse(await readFile(${callsPath},'utf8')) as {image_id:string;request_id:string;chain_id:string;use_mix:string}[];
 expect(calls.map(c=>c.image_id)).toEqual(['00110000-0000-4000-8000-000000000001','00110000-0000-4000-8000-000000000002']);
 expect(calls[0].request_id).not.toBe(calls[1].request_id);expect(calls.every(c=>c.chain_id==='${chainId}'&&c.use_mix==='false')).toBe(true);
+});`,
+);
+await write(
+  "specs/z-new-chain.spec.ts",
+  `import {test,expect} from '@playwright/test';import {readFile,writeFile} from 'node:fs/promises';
+test('new chain with no images can upload before adding steps and run one or three text steps',async({page})=>{
+ const original=await readFile(${uploadRowsPath},'utf8');await writeFile(${imageAvailabilityPath},'false');await writeFile(${uploadRowsPath},'[]');
+ try{
+ await page.route('**/asset/**',route=>route.fulfill({contentType:'image/svg+xml',body:'<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"></svg>'}));
+ await page.goto('/chains');await page.getByRole('button',{name:'New chain',exact:true}).click();await page.getByRole('textbox',{name:'Name',exact:true}).fill('New chain regression');await page.getByRole('button',{name:'Create chain',exact:true}).click();
+ await expect(page.getByRole('heading',{level:1})).toHaveText('New chain regression');const chainId=new URL(page.url()).searchParams.get('chain');const panel=page.locator('.test');const run=panel.getByRole('button',{name:'Run',exact:true});
+ await expect(page.getByLabel('Upload your own image')).toBeEnabled();await expect(panel.getByRole('checkbox')).toHaveCount(0);await expect(run).toBeDisabled();await expect(panel.getByRole('status')).toContainText('Add a step');
+ await page.getByLabel('Upload your own image').setInputFiles({name:'New chain image.jpg',mimeType:'image/jpeg',buffer:Buffer.from('${validJpeg}','base64')});await expect(panel.getByRole('checkbox',{name:'New chain image',exact:true})).toBeChecked();await expect(run).toBeDisabled();
+ for(let n=1;n<=3;n++){
+ await page.getByRole('button',{name:'Add step '+n,exact:true}).click();await page.getByRole('textbox',{name:'Step name',exact:true}).fill('Text step '+n);await page.getByRole('textbox',{name:'User prompt',exact:true}).fill(n===1?'Describe this image':'Write something funny using the previous output');await expect(page.getByRole('combobox',{name:'Output',exact:true})).toHaveValue('text');await page.getByRole('button',{name:'Add step',exact:true}).click();await expect(page.locator('.steps .step')).toHaveCount(n);await expect(run).toBeEnabled();
+ if(n===1){await run.click();await expect(panel.getByRole('link',{name:'See the results',exact:true})).toBeVisible();
+ await page.getByRole('button',{name:'Edit Text step 1',exact:true}).click();await page.getByRole('combobox',{name:'Input',exact:true}).selectOption('previous');await page.getByRole('button',{name:'Save step',exact:true}).click();await expect(run).toBeDisabled();await expect(panel.getByRole('link',{name:'See the results',exact:true})).toHaveCount(1);await expect(panel.locator('.results')).toContainText('Earlier version');await expect(panel.locator('#run-requirements')).toContainText('first step');await expect(page.getByLabel('Upload your own image')).toBeEnabled();
+ await page.getByRole('button',{name:'Edit Text step 1',exact:true}).click();await page.getByRole('combobox',{name:'Input',exact:true}).selectOption('image');await page.getByRole('button',{name:'Save step',exact:true}).click();await expect(run).toBeEnabled();}
+ }
+ await expect(page.getByRole('region',{name:'Chain diagram',exact:true}).getByText('Text',{exact:true})).toBeVisible();await run.click();await expect(panel.getByRole('link',{name:'See the results',exact:true})).toBeVisible();const calls=JSON.parse(await readFile(${callsPath},'utf8'));expect(calls.at(-1).chain_id).toBe(chainId);
+ }finally{await writeFile(${imageAvailabilityPath},'true');await writeFile(${uploadRowsPath},original);}
 });`,
 );
 delete env.GEMINI_API_KEY;

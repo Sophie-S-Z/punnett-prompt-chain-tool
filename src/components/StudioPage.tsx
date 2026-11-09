@@ -270,8 +270,8 @@ export async function StudioPage({
                 </div>
                 {!selected.steps.length && (
                   <p className="hint">
-                    Start with a step that reads the image. The last step must
-                    write captions.
+                    Start with a step that reads the image. Later steps can use
+                    its output to write text or captions.
                   </p>
                 )}
                 <StepList id={selected.id}>

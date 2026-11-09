@@ -47,8 +47,6 @@ export function validateChain(chain: Chain): string | null {
     return "The first step must take the source image.";
   if (chain.steps.slice(1).some((s) => s.input_kind !== "previous"))
     return "Steps after the first must take the previous output.";
-  if (chain.steps.at(-1)?.output_kind !== "captions")
-    return "The final step must return captions.";
   if (
     chain.steps.some(
       (s) =>
