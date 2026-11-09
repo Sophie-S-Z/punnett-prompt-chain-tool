@@ -7,7 +7,7 @@ test("visitor cannot read or mutate prompt data; icons remain public", async ({
   await page.goto("/");
   await expect(page.getByLabel("Appearance")).toHaveValue("night");
   await expect(page.getByRole("heading", { level: 1 })).toContainText(
-    "Build better prompt chains",
+    "Create and test prompt chains",
   );
   for (const path of ["/chains", "/runs", "/unknown"]) {
     await page.goto(path);

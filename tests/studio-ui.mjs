@@ -7,6 +7,7 @@ import { spawn } from "node:child_process";
 const root = process.cwd(),
   folder = resolve(".vercel/studio-ui-harness"),
   port = 3114;
+const preview = process.env.PUNNETT_UI_PREVIEW === "1";
 async function write(name, text) {
   await mkdir(resolve(folder, name, ".."), { recursive: true });
   await writeFile(resolve(folder, name), text);
@@ -112,6 +113,11 @@ const validJpeg = (
     .jpeg()
     .toBuffer()
 ).toString("base64");
+await write(
+  "app/asset/[id]/route.ts",
+  `// Isolated fixture pixels only; never deployed with the application.
+export function GET(){return new Response(Buffer.from('${validJpeg}','base64'),{headers:{'Content-Type':'image/jpeg'}});}`,
+);
 const formatInputs = await Promise.all(
   [
     [
@@ -285,12 +291,14 @@ test('diagram: drag a step to reorder, order persists, past runs show the chain 
 const titles=page.locator('.steps .step h3');
 await page.goto('/chains',{waitUntil:'networkidle'});
 const map=page.getByRole('region',{name:'Chain diagram',exact:true});
+await expect(map).not.toBeVisible();await page.getByText('View step order',{exact:true}).click();await expect(map).toBeVisible();
 const node=(name:string)=>map.locator('.react-flow__node').filter({hasText:name});
 async function drag(from:string,to:string){const a=await node(from).boundingBox(),b=await node(to).boundingBox();if(!a||!b)throw new Error('Step nodes were not measured');
 await page.mouse.move(a.x+a.width/2,a.y+a.height/2);await page.mouse.down();await page.mouse.move(b.x+b.width/2+20,b.y+b.height/2,{steps:15});await page.mouse.up();}
 await drag('Describe','Caption draft');
 await expect(titles).toHaveText([/Caption draft$/,/Describe$/]);
 await page.reload({waitUntil:'networkidle'});await expect(titles).toHaveText([/Caption draft$/,/Describe$/]);
+await page.getByText('View step order',{exact:true}).click();
 await drag('Describe','Caption draft');
 await expect(titles).toHaveText([/Describe$/,/Caption draft$/]);
 await page.getByRole('link',{name:'Past runs',exact:true}).click();
@@ -331,7 +339,7 @@ test('new chain with no images can upload before adding steps and run one or thr
  await page.getByRole('button',{name:'Edit Text step 1',exact:true}).click();await page.getByRole('combobox',{name:'Input',exact:true}).selectOption('previous');await page.getByRole('button',{name:'Save step',exact:true}).click();await expect(run).toBeDisabled();await expect(panel.getByRole('link',{name:'See the results',exact:true})).toHaveCount(1);await expect(panel.locator('.results')).toContainText('Earlier version');await expect(panel.locator('#run-requirements')).toContainText('first step');await expect(page.getByLabel('Upload your own image')).toBeEnabled();
  await page.getByRole('button',{name:'Edit Text step 1',exact:true}).click();await page.getByRole('combobox',{name:'Input',exact:true}).selectOption('image');await page.getByRole('button',{name:'Save step',exact:true}).click();await expect(run).toBeEnabled();}
  }
- await expect(page.getByRole('region',{name:'Chain diagram',exact:true}).getByText('Text',{exact:true})).toBeVisible();await run.click();await expect(panel.getByRole('link',{name:'See the results',exact:true})).toBeVisible();const calls=JSON.parse(await readFile(${callsPath},'utf8'));expect(calls.at(-1).chain_id).toBe(chainId);
+ await page.getByText('View step order',{exact:true}).click();await expect(page.getByRole('region',{name:'Chain diagram',exact:true}).getByText('Text',{exact:true})).toBeVisible();await run.click();await expect(panel.getByRole('link',{name:'See the results',exact:true})).toBeVisible();const calls=JSON.parse(await readFile(${callsPath},'utf8'));expect(calls.at(-1).chain_id).toBe(chainId);
  }finally{await writeFile(${imageAvailabilityPath},'true');await writeFile(${uploadRowsPath},original);}
 });`,
 );
@@ -344,36 +352,38 @@ async function processExit(args) {
   });
   return new Promise((resolveExit) => child.once("exit", resolveExit));
 }
-assert.equal(
-  await processExit([
-    resolve("node_modules/next/dist/bin/next"),
-    "build",
-    folder,
-    "--webpack",
-  ]),
-  0,
-);
+if (!preview)
+  assert.equal(
+    await processExit([
+      resolve("node_modules/next/dist/bin/next"),
+      "build",
+      folder,
+      "--webpack",
+    ]),
+    0,
+  );
 const server = spawn(
   process.execPath,
   [
     resolve("node_modules/next/dist/bin/next"),
-    "start",
+    preview ? "dev" : "start",
     folder,
+    ...(preview ? ["--webpack"] : []),
     "--hostname",
     "127.0.0.1",
     "--port",
     String(port),
   ],
-  { cwd: root, env, stdio: "ignore" },
+  { cwd: root, env, stdio: preview ? "inherit" : "ignore" },
 );
 try {
   let ready = false;
-  for (let i = 0; i < 60; i++) {
+  for (let i = 0; i < (preview ? 180 : 60); i++) {
     try {
       if (
         (
           await fetch(`http://127.0.0.1:${port}/chains`, {
-            signal: AbortSignal.timeout(1000),
+            signal: AbortSignal.timeout(preview ? 3000 : 1000),
           })
         ).ok
       ) {
@@ -384,18 +394,23 @@ try {
     await new Promise((r) => setTimeout(r, 500));
   }
   assert.ok(ready, "Fixture did not start");
-  assert.equal(
-    await processExit([
-      resolve("node_modules/@playwright/test/cli.js"),
-      "test",
-      "--config",
-      resolve(folder, "playwright.config.ts"),
-    ]),
-    0,
-  );
-  console.log(
-    "PASS: actual prompt UI fixture. No provider call or real database mutation.",
-  );
+  if (preview) {
+    console.log(`Isolated UI preview: http://127.0.0.1:${port}/chains`);
+    await new Promise((done) => process.once("SIGINT", done));
+  } else {
+    assert.equal(
+      await processExit([
+        resolve("node_modules/@playwright/test/cli.js"),
+        "test",
+        "--config",
+        resolve(folder, "playwright.config.ts"),
+      ]),
+      0,
+    );
+    console.log(
+      "PASS: actual prompt UI fixture. No provider call or real database mutation.",
+    );
+  }
 } finally {
   if (server.exitCode === null) server.kill();
 }

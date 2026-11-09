@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { ImageUpload } from "./ImageUpload";
 import { runStudio } from "@/app/studio-actions";
 import { validateChain, type Chain, type Option } from "@/lib/studio";
+import { motionTokens } from "@/lib/motion";
 
 type Result = {
   ok: boolean;
@@ -169,7 +170,7 @@ export function RunPanel({
             </button>
           )}
         </fieldset>
-        <div className="row">
+        <div className="row run-actions">
           <button
             type="button"
             className="button"
@@ -198,7 +199,10 @@ export function RunPanel({
           <motion.p
             initial={reduce ? false : { opacity: 0.8, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: reduce ? 0 : 0.2 }}
+            transition={{
+              duration: reduce ? 0 : motionTokens.duration.normal,
+              ease: motionTokens.ease.enter,
+            }}
             key={result.id ?? index}
             className={result.ok ? "success" : "error"}
             role={result.ok ? "status" : "alert"}
@@ -207,7 +211,7 @@ export function RunPanel({
               <span>Earlier version: </span>
             )}
             <span>{label(result.image)}: </span>
-            {result.ok ? "Finished." : result.message}{" "}
+            {result.ok ? "Finished" : result.message}{" "}
             {result.id && (
               <Link href={`/runs?q=${result.id}`}>See the results</Link>
             )}

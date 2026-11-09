@@ -34,11 +34,7 @@ export default async function Home({
         </p>
         <ThemeControl />
       </div>
-      <h1>Build better prompt chains</h1>
-      <p>
-        Write the steps that turn an image into captions. Change their order,
-        then test the chain on real images.
-      </p>
+      <h1>Create and test prompt chains</h1>
       {(await searchParams).auth === "failed" && (
         <p className="error" role="alert">
           Sign-in did not finish. Please try again.

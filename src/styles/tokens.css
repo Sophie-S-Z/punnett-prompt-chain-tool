@@ -22,6 +22,9 @@
   --shadow: 0 24px 64px #00000066;
   --radius: 12px;
   --radius-control: 8px;
+  --motion-enter: 200ms;
+  --motion-exit: 160ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 }
 [data-theme="lights-on"] {
   color-scheme: light;

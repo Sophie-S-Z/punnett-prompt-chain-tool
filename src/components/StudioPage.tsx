@@ -93,19 +93,23 @@ async function readOptions(client: Client) {
       if (!r.data.length) throw new Error("The image list was incomplete.");
     }
   }
+  const uploads: Option[] = [];
   for (let offset = 0; ; offset += 200) {
     const result = await client
       .rpc("punnett_studio_uploaded_images", {}, { count: "exact" })
       .range(offset, offset + 199);
     if (result.error || result.count === null)
       throw new Error("Your uploaded images could not be loaded.");
-    for (const image of result.data)
-      if (!options.images.some((i) => i.id === image.id))
-        options.images.push(image);
+    uploads.push(...result.data);
     if (offset + result.data.length >= result.count) break;
     if (!result.data.length)
       throw new Error("The uploaded image list was incomplete.");
   }
+  const uploadedIds = new Set(uploads.map((image) => image.id));
+  options.images = [
+    ...uploads,
+    ...options.images.filter((image) => !uploadedIds.has(image.id)),
+  ];
   return options;
 }
 
@@ -259,10 +263,7 @@ export async function StudioPage({
             <>
               <ChainHeader key={`header:${selected.id}`} chain={selected} />
               {selected.steps.length >= 2 && (
-                <ChainCanvas
-                  key={`flow:${selected.id}:${selected.revision}`}
-                  chain={selected}
-                />
+                <ChainCanvas key={`flow:${selected.id}`} chain={selected} />
               )}
               <section aria-labelledby="steps-title">
                 <div className="section-head">

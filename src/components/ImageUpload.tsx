@@ -13,7 +13,8 @@ export function ImageUpload({
   onUploaded: (image: Option) => void;
 }) {
   const [busy, setBusy] = useState(false),
-    [error, setError] = useState("");
+    [error, setError] = useState(""),
+    [saved, setSaved] = useState("");
   const input = useRef<HTMLInputElement>(null);
   return (
     <div className="upload-image">
@@ -28,6 +29,7 @@ export function ImageUpload({
             const file = e.currentTarget.files?.[0];
             if (!file) return;
             setError("");
+            setSaved("");
             if (
               file.size > 8 * 1024 * 1024 ||
               !["image/jpeg", "image/png", "image/webp", "image/gif"].includes(
@@ -49,7 +51,10 @@ export function ImageUpload({
               );
               const result = await uploadStudioImage(form);
               if (!result.ok) setError(result.message);
-              else onUploaded({ id: result.id, label: result.label });
+              else {
+                onUploaded({ id: result.id, label: result.label });
+                setSaved(`${result.label} saved`);
+              }
             } catch (cause) {
               setError(
                 cause instanceof Error
@@ -65,10 +70,15 @@ export function ImageUpload({
         />
       </label>
       <p className="hint">
-        JPEG, PNG, WebP, or GIF. Up to 8 MB. Images are resized before upload
-        and saved for future runs. Animated images use a still frame.
+        JPEG, PNG, WebP, or GIF · up to 8 MB. Saved for future runs. Animated
+        images use a still frame.
       </p>
       {busy && <p role="status">Uploading...</p>}
+      {saved && (
+        <p role="status" className="upload-saved">
+          {saved}
+        </p>
+      )}
       {error && (
         <p role="alert" className="error">
           {error}

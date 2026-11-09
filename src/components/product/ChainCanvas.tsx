@@ -65,8 +65,21 @@ function buildNodes(chain: Chain): FlowNode[] {
   ];
 }
 
-/** Shows the saved order. Drag a step sideways to move it. */
 export function ChainCanvas({ chain }: { chain: Chain }) {
+  const [expanded, setExpanded] = useState(false);
+  return (
+    <details
+      className="chain-map"
+      onToggle={(event) => setExpanded(event.currentTarget.open)}
+    >
+      <summary>View step order</summary>
+      {expanded && <StepFlow key={chain.revision} chain={chain} />}
+    </details>
+  );
+}
+
+/** Mount the interactive diagram only when requested, at its saved revision. */
+function StepFlow({ chain }: { chain: Chain }) {
   const router = useRouter();
   const [busy, start] = useTransition();
   const [message, setMessage] = useState("");

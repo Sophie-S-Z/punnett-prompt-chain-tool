@@ -12,6 +12,7 @@ import {
 import { useRouter } from "next/navigation";
 import { editStudio } from "@/app/studio-actions";
 import type { Chain, Option, Step } from "@/lib/studio";
+import { motionTokens } from "@/lib/motion";
 
 type Done = (id?: string) => void;
 
@@ -72,8 +73,12 @@ function InlineForm({
   return (
     <motion.form
       initial={false}
-      layout="position"
-      transition={{ duration: reduce ? 0 : 0.2 }}
+      layout={reduce ? false : "position"}
+      transition={{
+        type: "tween",
+        duration: reduce ? 0 : motionTokens.duration.normal,
+        ease: motionTokens.ease.move,
+      }}
       className="inline-form"
       onChange={() => setError("")}
       onKeyDown={(e) => {
@@ -344,7 +349,7 @@ export function ChainHeader({ chain }: { chain: Chain }) {
           aria-label="Edit chain name and description"
           onClick={() => setEditing(true)}
         >
-          Edit
+          Edit chain
         </button>
         <DeleteButton
           operation="chain.delete"
@@ -374,7 +379,13 @@ export function StepItem({
     <motion.li
       initial={false}
       layout={reduce ? false : "position"}
-      transition={{ layout: { type: "spring", stiffness: 420, damping: 38 } }}
+      transition={{
+        layout: {
+          type: "tween",
+          duration: reduce ? 0 : motionTokens.duration.normal,
+          ease: motionTokens.ease.move,
+        },
+      }}
       className="step"
       id={`step-${step.id}`}
     >
@@ -428,7 +439,7 @@ export function StepItem({
                 aria-label={`Edit ${step.name}`}
                 onClick={() => setEditing(true)}
               >
-                Edit
+                Edit step
               </button>
               <MoveStep chain={chain} step={step} />
               <DeleteButton

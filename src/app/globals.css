@@ -56,6 +56,8 @@ h1 {
   font-weight: 600;
   letter-spacing: -0.02em;
   line-height: 1.2;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
 }
 h2 {
   font-size: 1rem;
@@ -64,6 +66,9 @@ h2 {
 h3 {
   font-size: 0.95rem;
   font-weight: 600;
+}
+main {
+  scroll-margin-top: 96px;
 }
 .visually-hidden {
   position: absolute;
@@ -98,6 +103,7 @@ small {
 .count {
   color: var(--text-muted);
   font-weight: 400;
+  font-variant-numeric: tabular-nums;
 }
 .error {
   color: var(--danger);
@@ -144,6 +150,13 @@ small {
   font-size: 0.875rem;
   font-weight: 500;
   white-space: nowrap;
+  transition:
+    transform var(--motion-exit) var(--ease-out),
+    background-color var(--motion-enter) var(--ease-out),
+    opacity var(--motion-exit) var(--ease-out);
+}
+.button:active:not(:disabled) {
+  transform: scale(0.97);
 }
 .button:hover:not(:disabled) {
   opacity: 0.88;
@@ -179,7 +192,7 @@ small {
 label {
   display: grid;
   gap: 6px;
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   font-weight: 500;
 }
 .optional {
@@ -245,6 +258,10 @@ fieldset {
 
 /* Top bar */
 .topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--bg);
   display: flex;
   align-items: center;
   gap: 24px;
@@ -301,6 +318,14 @@ fieldset {
   margin: 0 auto;
   padding: 48px 0;
 }
+.access-screen h1 {
+  max-width: 15ch;
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  letter-spacing: -0.035em;
+}
+.access-screen .auth-controls {
+  margin-top: 8px;
+}
 .access-screen > p {
   color: var(--text-muted);
 }
@@ -326,6 +351,11 @@ fieldset {
   min-height: calc(100vh - 57px);
 }
 .chain-nav {
+  position: sticky;
+  top: 56px;
+  align-self: start;
+  max-height: calc(100dvh - 56px);
+  overflow-y: auto;
   display: grid;
   align-content: start;
   gap: 12px;
@@ -350,12 +380,15 @@ fieldset {
   padding: 8px;
   border-radius: var(--radius-control);
   font-size: 0.9rem;
+  border-left: 2px solid transparent;
+  transition: background-color var(--motion-enter) var(--ease-out);
 }
 .chain-nav li a:hover {
   background: var(--surface);
 }
 .chain-nav li a[aria-current="page"] {
   background: var(--surface-active);
+  border-left-color: var(--accent);
 }
 .chain-nav li small {
   font-size: 0.75rem;
@@ -363,9 +396,9 @@ fieldset {
 .chain-detail {
   display: grid;
   align-content: start;
-  gap: 40px;
-  width: min(100%, 860px);
-  padding: 32px 40px 80px;
+  gap: 28px;
+  width: min(100%, 1120px);
+  padding: 40px clamp(24px, 4vw, 56px) 80px;
 }
 .chain-header {
   display: flex;
@@ -392,6 +425,15 @@ fieldset {
 }
 
 /* Diagram */
+.chain-map > summary {
+  width: fit-content;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+.chain-map[open] > summary {
+  margin-bottom: 12px;
+}
 .flow {
   display: grid;
   gap: 8px;
@@ -460,7 +502,7 @@ fieldset {
   display: grid;
   grid-template-columns: 28px minmax(0, 1fr);
   gap: 12px;
-  padding: 18px 0;
+  padding: 24px 0;
   border-top: 1px solid var(--border);
 }
 .steps .step:first-child {
@@ -485,7 +527,7 @@ fieldset {
 }
 .step-head {
   display: grid;
-  gap: 2px;
+  gap: 6px;
 }
 .prompt {
   display: -webkit-box;
@@ -495,6 +537,8 @@ fieldset {
   color: var(--text-secondary);
   font-size: 0.875rem;
   white-space: pre-wrap;
+  max-width: 76ch;
+  line-height: 1.65;
 }
 details[open] > .prompt,
 .system-prompt .prompt {
@@ -514,6 +558,10 @@ details[open] > .prompt,
   flex-wrap: wrap;
   align-items: center;
   gap: 4px 16px;
+}
+.step-actions > .text-button:first-child {
+  color: var(--accent);
+  font-weight: 500;
 }
 .step-actions .error {
   flex-basis: 100%;
@@ -558,8 +606,8 @@ details[open] > .prompt,
 }
 .image-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(144px, 1fr));
+  gap: 16px;
 }
 .image-choice {
   position: relative;
@@ -576,9 +624,21 @@ details[open] > .prompt,
   background: var(--surface);
   outline: 2px solid transparent;
   outline-offset: 2px;
+  transition:
+    outline-color var(--motion-enter) var(--ease-out),
+    opacity var(--motion-enter) var(--ease-out);
 }
 .image-choice.on img {
   outline-color: var(--accent);
+}
+.image-choice:has(input:focus-visible) img {
+  outline-color: var(--focus);
+}
+.image-choice:has(input:disabled) {
+  cursor: not-allowed;
+}
+.image-choice:has(input:disabled:not(:checked)) img {
+  opacity: 0.55;
 }
 .image-choice input {
   position: absolute;
@@ -588,7 +648,7 @@ details[open] > .prompt,
 .image-choice span {
   overflow: hidden;
   color: var(--text-muted);
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
@@ -599,7 +659,51 @@ details[open] > .prompt,
   display: grid;
   gap: 6px;
 }
+.results:empty {
+  display: none;
+}
+.upload-image {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius);
+}
+.upload-image input[type="file"] {
+  padding: 0;
+  min-height: 36px;
+  border: 0;
+  background: transparent;
+  font-size: 0.875rem;
+}
+.upload-image input::file-selector-button {
+  margin-right: 12px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--surface-active);
+  color: var(--text);
+  cursor: pointer;
+}
+.upload-saved {
+  color: var(--accent);
+  font-size: 0.875rem;
+  overflow-wrap: anywhere;
+  animation: confirm var(--motion-enter) var(--ease-out);
+}
+.run-actions {
+  padding-top: 8px;
+}
+@keyframes confirm {
+  from {
+    opacity: 0.5;
+  }
+  to {
+    opacity: 1;
+  }
+}
 .results a {
+  margin-inline-start: 6px;
   text-decoration: underline;
   text-underline-offset: 3px;
 }
@@ -782,6 +886,19 @@ details[open] > .prompt,
   gap: 12px;
   margin-top: 8px;
 }
+.dialog[data-state="open"],
+.dialog-overlay[data-state="open"] {
+  animation: confirm var(--motion-enter) var(--ease-out);
+}
+.dialog[data-state="closed"],
+.dialog-overlay[data-state="closed"] {
+  animation: dismiss var(--motion-exit) var(--ease-out);
+}
+@keyframes dismiss {
+  to {
+    opacity: 0;
+  }
+}
 
 /* Small screens */
 @media (max-width: 760px) {
@@ -789,14 +906,16 @@ details[open] > .prompt,
     gap: 12px;
     padding: 0 16px;
   }
-  .brand span,
-  .flow {
+  .chain-map {
     display: none;
   }
   .workspace {
     grid-template-columns: minmax(0, 1fr);
   }
   .chain-nav {
+    position: static;
+    max-height: none;
+    overflow-y: visible;
     padding: 16px;
     border-right: 0;
     border-bottom: 1px solid var(--border);
@@ -811,6 +930,9 @@ details[open] > .prompt,
   }
   .chain-detail {
     padding: 24px 16px 64px;
+  }
+  .image-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   }
   .chain-header,
   .page-head {
@@ -838,6 +960,10 @@ details[open] > .prompt,
     padding: 10px 16px;
     row-gap: 8px;
   }
+  .topbar .brand {
+    flex-basis: 100%;
+    font-size: 0.875rem;
+  }
   .topbar-end {
     gap: 6px;
   }
@@ -855,10 +981,18 @@ details[open] > .prompt,
   * {
     scroll-behavior: auto !important;
     transition: none !important;
+    animation: none !important;
+  }
+  .button:active:not(:disabled) {
+    transform: none;
   }
 }
 .field {
   display: grid;
   gap: 6px;
 }
-.field small a { color: var(--text-secondary); text-decoration: underline; text-underline-offset: 3px; }
+.field small a {
+  color: var(--text-secondary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
